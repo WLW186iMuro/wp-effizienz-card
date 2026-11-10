@@ -1,0 +1,29 @@
+# Einstellungen → Dashboards → Dashboard hinzufügen → (neues Dashboard öffnen) → ⋮ → Roh-Konfigurationseditor
+# Die Zahlen unter "defaults" sind Beispielwerte: bitte durch die Werte der eigenen Anlage ersetzen.
+title: WP Effizienz
+views:
+  - title: Effizienz
+    path: simulator
+    type: panel
+    cards:
+      - type: custom:wp-simulator-card
+        title: Wärmepumpe – Effizienz-Rechner
+        defaults:
+          nat: -10        # Normaußentemperatur des Standorts (°C)
+          loadKw: 5.0     # Gebäudeheizlast bei NAT (kW), aus der Heizlastberechnung
+          limit: 15       # Heizgrenze (°C)
+          ti: 21          # gewünschte Raumtemperatur (°C)
+        # shift:          # Parallelverschiebung der Heizkurve, an der eigenen Anlage ermittelt
+        #   room: 1.5     # K Vorlauf je K Raumsoll
+        #   offset: 1.3   # K Vorlauf je K Temperaturanhebung
+        #   ref: 21       # Bezugs-Raumsoll (°C)
+  - title: JAZ & SCOP
+    path: jaz-scop
+    icon: mdi:chart-bar
+    type: panel
+    cards:
+      - type: custom:wp-jaz-card
+        title: Jahresarbeitszahl & SCOP
+        scop35: 4.58      # SCOP laut Datenblatt bei 35 °C
+        scop55: 3.52      # SCOP laut Datenblatt bei 55 °C
+        season_start_month: 7

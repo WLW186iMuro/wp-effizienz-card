@@ -1,0 +1,9 @@
+secrets.yaml
+.storage/
+*.db
+*.db-*
+*.log
+*.csv
+backup/
+*.tar
+.DS_Store
