@@ -9,8 +9,6 @@ Zwei Dashboard-Karten für die Luft-Wasser-Wärmepumpe **Buderus Logatherm WLW18
 | Effizienz-Rechner | `custom:wp-simulator-card` | Heizkurve, Heizlast und COP durchrechnen. Regler verschieben und sofort sehen, wie sich Vorlauf, Spreizung, Pumpendruck, COP und Stromverbrauch pro Tag ändern. |
 | JAZ & SCOP | `custom:wp-jaz-card` | Jahresarbeitszahl und Monatsarbeitszahlen aus der Langzeitstatistik, Vergleich mit dem SCOP laut Datenblatt. |
 
-> Screenshots hier einfügen (`docs/…png`).
-
 ## Installation
 
 1. Auf **Open in HACS** klicken. Alternativ: HACS → ⋮ → *Benutzerdefinierte Repositories* → diese Repository-URL, Kategorie **Dashboard**.
