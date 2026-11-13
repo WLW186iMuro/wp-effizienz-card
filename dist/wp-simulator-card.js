@@ -1,13 +1,14 @@
 /* WP Effizienz-Rechner – Buderus WLW186i mit 7-kW-Außeneinheit
  * Außeneinheit WLW-7 MB AR (WLW186i-7 AR), Inneneinheit WLW186i-12 TP70. Kennwerte aus der Buderus-Planungsunterlage 2024/04.
- * Regler verschieben, Anlagenschema und COP rechnen live mit. Rechenmodell nach bosch-buderus-wp.github.io,
+ * Regler verschieben, Anlagenschema und COP rechnen live mit. Der Rechenkern ist ein Port des Simulators von
+ * Matthias Röckl (https://bosch-buderus-wp.github.io/, MIT-Lizenz, Copyright (c) 2026 Matthias Röckl; siehe NOTICE.md),
  * ergänzt um die Wärmeabgabe der Fußbodenheizung (Deckung der Heizlast) und das Takten unter der Mindestleistung.
  * Nutzung:   type: custom:wp-simulator-card
  * Optional:  title, storage_key, defaults: { ... }, entities: { ... }, controls: { <regler>: { min, max, step } },
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.5.1";
+const WPS_VERSION = "3.5.2";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -365,6 +366,9 @@ const WPS_CSS = `
   .warn { margin-top:6px; padding:4px 8px; border-radius:6px; font-size:12px; color:var(--warning-color,#ffa726);
           background:rgba(255,167,38,.1); display:none; }
   .warn.show { display:block; }
+  .credit { font-size:11px; color:var(--secondary-text-color); margin-top:8px; line-height:1.35; }
+  .credit a { color:var(--primary-color); text-decoration:none; }
+  .credit a:hover { text-decoration:underline; }
   .note { font-size:11px; color:var(--secondary-text-color); margin-top:6px; line-height:1.35; }
   .note summary { cursor:pointer; font-weight:600; font-size:12px; user-select:none; -webkit-user-select:none; }
   .note[open] summary { margin-bottom:3px; }
@@ -682,6 +686,7 @@ class WpSimulatorCard extends HTMLElement {
           PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur der Wert aus „WP Primärkreis Durchfluss berechnet“, sonst dieselbe Formel wie im Helfer (unter 50 %: 610 + 6,2 l/h je %, ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %)). Ändert sich die Formel im Helfer, muss sie in der Karte (WPS_PC0_A/WPS_PC0_B) mitgezogen werden.
           Ein Bestwert zählt nur, wenn die Heizlast zu mindestens 98 % gedeckt ist. „Als Standard speichern“ merkt sich die Reglerstellung in diesem Browser.
           Kennwerte: WLW-7 MB AR laut Buderus-Planungsunterlage 2024/04. Unter der Mindestleistung taktet die WP; Taktverluste nach EN 14825 sind eingerechnet.</details>
+        <div class="credit">Rechenkern nach dem Simulator von Matthias Röckl: <a href="https://bosch-buderus-wp.github.io/" target="_blank" rel="noopener noreferrer">bosch-buderus-wp.github.io</a></div>
       </div>
       </div>
     </ha-card>`;

@@ -4,6 +4,8 @@
 
 Zwei Dashboard-Karten für die Luft-Wasser-Wärmepumpe **Buderus Logatherm WLW186i** (Bosch-Schwestermodell: Compress 5800i/6800i AW), ausgelesen über [EMS-ESP](https://emsesp.org).
 
+> Der Rechenkern des Effizienz-Rechners geht auf den Simulator von **Matthias Röckl** zurück ([bosch-buderus-wp.github.io](https://bosch-buderus-wp.github.io/)), verwendet mit seiner Erlaubnis und unter seiner MIT-Lizenz. Danke dafür.
+
 | Karte | Typ | Zweck |
 |---|---|---|
 | Effizienz-Rechner | `custom:wp-simulator-card` | Heizkurve, Heizlast und COP durchrechnen. Regler verschieben und sofort sehen, wie sich Vorlauf, Spreizung, Pumpendruck, COP und Stromverbrauch pro Tag ändern. |
@@ -72,8 +74,8 @@ Weitere Optionen: `heat_heating`, `heat_dhw`, `el_heating`, `el_dhw` (Listen mö
 
 ## Hinweise
 
-- Der Effizienz-Rechner ist ein Rechenmodell, kein Messgerät. Grundlage sind die Kennwerte der Buderus-Planungsunterlage WLW176i/186i AR (2024/04) und der Rechenkern des Simulators von [bosch-buderus-wp.github.io](https://bosch-buderus-wp.github.io).
+- Der Effizienz-Rechner ist ein Rechenmodell, kein Messgerät. Grundlage sind die Kennwerte der Buderus-Planungsunterlage WLW176i/186i AR (2024/04) und der Rechenkern des Simulators von **Matthias Röckl** ([bosch-buderus-wp.github.io](https://bosch-buderus-wp.github.io/), MIT-Lizenz, Verwendung vom Autor erlaubt). Details und Lizenztext in [NOTICE.md](NOTICE.md).
 - Die JAZ-Karte nutzt die internen Energiezähler der Wärmepumpe, keinen geeichten Zähler. Die reale JAZ liegt etwas niedriger, weil Hilfsenergie darin evtl. fehlt.
 - Privates Hobbyprojekt, keine Verbindung zu Bosch oder Buderus. Die Namen sind Marken der jeweiligen Inhaber. Nutzung auf eigene Verantwortung; die Karten verändern keine Einstellungen an der Heizung.
 
-Lizenz: [MIT](LICENSE)
+Lizenz: [MIT](LICENSE), Drittcode siehe [NOTICE.md](NOTICE.md)
