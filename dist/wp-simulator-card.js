@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.6.2";
+const WPS_VERSION = "3.7.0";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -20,7 +20,7 @@ const WPS_PROFILES = {
             min: { "-20": 2.0, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2.0, "20": 2.2 },
             q45: [4.75, 5.2, 6.0, 5.7, 7.05, 7.8, 9.05, 10.0], q55: [3.6, 5.05, 5.25, 5.05, 5.7, 7.5, 8.55, 8.9],
             m45: [1.8, 1.1, 1.4, 1.6, 1.7, 1.4, 1.85, 2.1], m55: [1.7, 1.05, 1.3, 1.45, 1.55, 1.3, 1.7, 2.0],
-            el: [300, 2510, 0.1195], cop: [0.56, 0.008, 0.015], as: 0.8 },
+            el: [300, 2510, 0.1195], cop: [0.56, 0.008, 0.015], cslope: -0.0013, as: 0.8 },
   /* Weitere Größen: Werte aus Planungsunterlage Tabelle 8.3.1 (Max. Heizleistung/COP bei -7, +2, +7 °C, W55 bei +7 °C, Teillast-Nennpunkte)
      und Röckls Simulator (-10 °C). Die Punkte bei -20, -15, +15 und +20 °C sowie die Mindestleistung stammen aus Bild 9 (abgelesen, ±0,1 kW):
      Kurve 1 = Min. 4/5/7 kW, Kurve 2 = Min. 10/12 kW (liegt im Bild bei +2 °C bei ca. 3,1 kW, die Tabelle nennt als Modulationsbereich 2,1 kW),
@@ -30,22 +30,22 @@ const WPS_PROFILES = {
             min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
             q45: [2.35, 2.8, 3.3, 3.65, 4.3, 4.6, 6.6, 7.2], q55: [2.25, 2.65, 3.2, 3.55, 3.9, 4.55, 6.25, 6.85],
             m45: [1.8, 1.1, 1.4, 1.6, 1.7, 1.4, 1.85, 2.1], m55: [1.7, 1.05, 1.3, 1.45, 1.55, 1.3, 1.7, 2.0],
-            el: [300, 1340, 0.26], cop: [0.64, 0.002, 0], as: 1 },
+            el: [300, 1340, 0.26], cop: [0.64, 0.002, 0], cslope: 0, as: 1 },
   "5 kW": { th: { "-20": [4.0, 0], "-15": [4.75, 0], "-10": [5.45, 0], "-7": [5.42, 2.51], "2": [6.43, 2.91, 2.41, 3.92], "7": [6.8, 3.16, 2.84, 4.85, 6.18], "15": [8.1, 0], "20": [8.6, 0] },
             min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
             q45: [3.75, 4.4, 5.1, 5.25, 6.5, 6.9, 7.75, 8.6], q55: [3.65, 4.3, 5.1, 4.85, 5.95, 6.2, 7.35, 8.1],
             m45: [1.8, 1.1, 1.4, 1.6, 1.7, 1.4, 1.85, 2.1], m55: [1.7, 1.05, 1.3, 1.45, 1.55, 1.3, 1.7, 2.0],
-            el: [300, 2210, 0.18], cop: [0.63, 0.01, 0.01], as: 1 },
+            el: [300, 2210, 0.18], cop: [0.63, 0.01, 0.01], cslope: 0.001, as: 1 },
   "10 kW": { th: { "-20": [7.3, 0], "-15": [8.9, 0], "-10": [9.99, 0], "-7": [9.57, 2.47], "2": [11.66, 2.84, 4.59, 4.48], "7": [12.67, 3, 5.58, 4.84, 12.07], "15": [13.5, 0], "20": [13.0, 0] },
             min: { "-20": 2.6, "-15": 2.9, "-10": 3.5, "-7": 3.9, "2": 3.1, "7": 2.5, "15": 3.2, "20": 3.65 },
             q45: [7.3, 8.4, 9.55, 9.65, 11.55, 12.35, 12.8, 12.25], q55: [6.95, 8.0, 9.1, 9.5, 11.4, 11.95, 12.45, 12.4],
             m45: [2.3, 2.7, 3.3, 3.6, 2.85, 2.15, 2.75, 3.2], m55: [2.2, 2.6, 3.2, 3.5, 2.85, 2.3, 2.9, 3.35],
-            el: [500, 4110, 0.13], cop: [0.67, -0.006, -0.0025], as: 1 },
+            el: [500, 4110, 0.13], cop: [0.67, -0.006, -0.0025], cslope: -0.0016, as: 1 },
   "12 kW": { th: { "-20": [7.85, 0], "-15": [10.6, 0], "-10": [11.82, 0], "-7": [11.56, 2.43], "2": [12.61, 2.64, 4.59, 4.48], "7": [12.9, 2.71, 5.58, 4.84, 12.84], "15": [13.5, 0], "20": [13.05, 0] },
             min: { "-20": 2.6, "-15": 2.9, "-10": 3.5, "-7": 3.9, "2": 3.1, "7": 2.5, "15": 3.2, "20": 3.65 },
             q45: [7.3, 10.1, 11.45, 11.65, 13.7, 13.2, 12.85, 12.6], q55: [7.8, 9.65, 11.1, 10.85, 12.4, 12.65, 12.5, 13.2],
             m45: [2.3, 2.7, 3.3, 3.6, 2.85, 2.15, 2.75, 3.2], m55: [2.2, 2.6, 3.2, 3.5, 2.85, 2.3, 2.9, 3.35],
-            el: [500, 4780, 0.12], cop: [0.69, -0.006, 0], as: 1 },
+            el: [500, 4780, 0.12], cop: [0.69, -0.006, 0], cslope: -0.0049, as: 1 },
 };
 /* Parallelverschiebung der Heizkurve (an der Anlage gemessen, per Karten-Konfiguration shift: {...} anpassbar):
    RSHIFT = K Vorlauf je K Raumsoll, OSHIFT = K Vorlauf je K Temperaturanhebung, RREF = Bezugs-Raumsoll
@@ -88,11 +88,14 @@ function wpsLoadW(Ta, p) {
 /* Heizbetrieb der WP aktiv? Ab der Heizgrenze der WP ist die Heizung aus. */
 function wpsHeatOn(Ta, p) { return !WPS_C.SPLIT || Ta < p.limit; }
 
-function wpsCOP(Tflow, Ta, model) {
+/* Über 35 °C Vorlauf: Korrektur des COP je K (Anteil). prof.cslope gleicht den Abfall 35 → 55 °C an das SCOP-Verhältnis
+   W55/W35 der Planungsunterlage an; extra (%/K, Regler „Zusätzlicher COP-Abfall“) ist die eigene Anpassung, z. B. für Heizkörper. */
+function wpsCOP(Tflow, Ta, model, extra = 0) {
   const Te = Ta - WPS_C.TE, Tc = Tflow + WPS_C.TC;
   const lift = wpsK(Tc) - wpsK(Te);
   const [eta, f, g = 0] = (WPS_PROFILES[model] || WPS_PROFILES["7 kW"]).cop;
-  return eta * (1 + f * (WPS_C.LIFT_REF - lift)) * (1 + g * (Tflow - 35)) * (wpsK(Tc) / lift);
+  const cs = Tflow > 35 ? Math.max(0.3, 1 + ((WPS_PROFILES[model] || WPS_PROFILES["7 kW"]).cslope || 0) * (Tflow - 35) - (extra || 0) / 100 * (Tflow - 35)) : 1;
+  return eta * (1 + f * (WPS_C.LIFT_REF - lift)) * (1 + g * (Tflow - 35)) * cs * (wpsK(Tc) / lift);
 }
 
 /* Stützpunkte bei 45 und 55 °C Vorlauf (Bild 11 und 13) liegen auf diesen Außentemperaturen */
@@ -212,7 +215,7 @@ function wpsCompute(p) {
   else if (mP >= mH) { TC3 = T0; TC0 = T0 - dTp; }
   else { TC3 = TR + dTp; TC0 = TR; }
 
-  const copBase = wpsCOP(TC3, Ta, model);
+  const copBase = wpsCOP(TC3, Ta, model, p.copSlope);
   const capMaxW = wpsCapMax(Ta, T0, model) * 1000;
   const modCap = wpsClamp(Qrun / Math.max(1e-9, capMaxW), 0, 1);
 
@@ -243,7 +246,7 @@ function wpsCompute(p) {
    flow150 = gemessener PC1-Durchfluss (794 l/h bei 250 mbar) umgerechnet auf 150 mbar; wird live aus EMS-ESP gelernt. */
 const WPS_DEFAULTS = {
   model: "7 kW", nat: -12, vl20: 22, vlNat: 31, rsoll: 22, offs: -2, minflow: 22, loadKw: 4.1, limB: 13, limit: 13,
-  spread: 4.5, pressure: 250, flow150: 615, pc0modmin: 41, pc0modwarm: 35, pc0a: 126, pc0b: 15.9, ti: 22, ta: 5.9, modMode: "electrical", effMod: true,
+  spread: 4.5, pressure: 250, flow150: 615, pc0modmin: 41, pc0modwarm: 35, copSlope: 0, pc0a: 126, pc0b: 15.9, ti: 22, ta: 5.9, modMode: "electrical", effMod: true,
 };
 
 /* Schlüssel, Bezeichnung, min, max, Schritt, Nachkommastellen, Einheit, Gruppe */
@@ -253,6 +256,7 @@ const WPS_CONTROLS = [
   ["nat", "Normaußentemperatur", -20, 0, 0.1, 1, "°C", "Rahmen"],
   ["loadKw", "Gebäudeheizlast bei NAT", 1, 15, 0.1, 1, "kW", "Rahmen"],
   ["limB", "Heizgrenze Gebäude (Heizlast = 0)", 8, 20, 0.5, 1, "°C", "Rahmen"],
+  ["copSlope", "Zusätzlicher COP-Abfall über 35 °C", -1, 3, 0.1, 1, "%/K", "Rahmen"],
   ["pc0modmin", "Min. Modulation PC0 unter 5 °C", 10, 100, 1, 0, "%", "Rahmen"],
   ["pc0modwarm", "Min. Modulation PC0 ab 5 °C", 10, 100, 1, 0, "%", "Rahmen"],
   ["vl20", "Fußpunkt (VL bei 20 °C)", 22, 40, 0.5, 1, "°C", "Einstellungen"],
@@ -849,7 +853,7 @@ class WpSimulatorCard extends HTMLElement {
 
   _bestKey() {
     const p = this._p;
-    return [p.ta.toFixed(1), p.ti, p.nat, p.loadKw, WPS_C.SPLIT ? p.limB : "-", p.flow150, p.pc0modmin, p.pc0modwarm, p.effMod ? 1 : 0, p.model].join("|");
+    return [p.ta.toFixed(1), p.ti, p.nat, p.loadKw, WPS_C.SPLIT ? p.limB : "-", p.flow150, p.pc0modmin, p.pc0modwarm, p.effMod ? 1 : 0, p.model, p.copSlope].join("|");
   }
 
   _trackBest() {
