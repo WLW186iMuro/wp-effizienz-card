@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.5.2";
+const WPS_VERSION = "3.5.3";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -686,7 +686,7 @@ class WpSimulatorCard extends HTMLElement {
           PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur der Wert aus „WP Primärkreis Durchfluss berechnet“, sonst dieselbe Formel wie im Helfer (unter 50 %: 610 + 6,2 l/h je %, ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %)). Ändert sich die Formel im Helfer, muss sie in der Karte (WPS_PC0_A/WPS_PC0_B) mitgezogen werden.
           Ein Bestwert zählt nur, wenn die Heizlast zu mindestens 98 % gedeckt ist. „Als Standard speichern“ merkt sich die Reglerstellung in diesem Browser.
           Kennwerte: WLW-7 MB AR laut Buderus-Planungsunterlage 2024/04. Unter der Mindestleistung taktet die WP; Taktverluste nach EN 14825 sind eingerechnet.</details>
-        <div class="credit">Rechenkern nach dem Simulator von Matthias Röckl: <a href="https://bosch-buderus-wp.github.io/" target="_blank" rel="noopener noreferrer">bosch-buderus-wp.github.io</a></div>
+        <div class="credit">Dieser Rechner basiert auf dem Simulator von <a href="https://bosch-buderus-wp.github.io/" target="_blank" rel="noopener noreferrer">Matthias Röckl (bosch-buderus-wp.github.io)</a> und wurde für diese Karte angepasst: eingebunden in Home Assistant mit Live-Werten aus EMS-ESP und um die Wärmeabgabe der Fußbodenheizung sowie das Takten unter der Mindestleistung erweitert.</div>
       </div>
       </div>
     </ha-card>`;

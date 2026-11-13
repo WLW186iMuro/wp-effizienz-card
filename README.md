@@ -4,7 +4,7 @@
 
 Zwei Dashboard-Karten für die Luft-Wasser-Wärmepumpe **Buderus Logatherm WLW186i** (Bosch-Schwestermodell: Compress 5800i/6800i AW), ausgelesen über [EMS-ESP](https://emsesp.org).
 
-> Der Rechenkern des Effizienz-Rechners geht auf den Simulator von **Matthias Röckl** zurück ([bosch-buderus-wp.github.io](https://bosch-buderus-wp.github.io/)), verwendet mit seiner Erlaubnis und unter seiner MIT-Lizenz. Danke dafür.
+> Der Effizienz-Rechner basiert auf dem Simulator von **Matthias Röckl** ([bosch-buderus-wp.github.io](https://bosch-buderus-wp.github.io/)). Er wurde für Home Assistant angepasst und erweitert (Live-Werte aus EMS-ESP, Wärmeabgabe der Fußbodenheizung, Takten unter der Mindestleistung) und wird mit seiner Erlaubnis unter seiner MIT-Lizenz verwendet. Danke dafür.
 
 | Karte | Typ | Zweck |
 |---|---|---|
