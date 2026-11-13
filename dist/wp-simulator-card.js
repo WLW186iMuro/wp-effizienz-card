@@ -1098,6 +1098,9 @@ class WpSimulatorCard extends HTMLElement {
   }
 }
 
+/* Schnittstelle für die JAZ-Karte (Abgleich Modell gegen Messung) */
+window.wpEffizienzModel = { version: WPS_VERSION, defaults: WPS_DEFAULTS, compute: wpsCompute };
+
 if (!customElements.get("wp-simulator-card")) {
   customElements.define("wp-simulator-card", WpSimulatorCard);
   window.customCards = window.customCards || [];

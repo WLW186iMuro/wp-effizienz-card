@@ -9,7 +9,7 @@
  * SCOP-Vergleich = Arbeitszahl nur Heizen über die Heizperiode (SCOP nach EN 14825
  * gilt nur für Raumheizung, inkl. Heizstab).
  */
-const WPJAZ_VERSION = '1.0.0';
+const WPJAZ_VERSION = '1.1.0';
 const WPJAZ_MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 
 const WPJAZ_DEFAULTS = {
@@ -24,6 +24,7 @@ const WPJAZ_DEFAULTS = {
   season_start_month: 7,
   months: 24,
   min_kwh: 1,
+  simulator_key: 'default',
 };
 
 const wpNum = (s) => {
@@ -139,6 +140,25 @@ class WpJazCard extends HTMLElement {
     return s;
   }
 
+  /* Modell-Arbeitszahl (Heizen) des Effizienz-Rechners für die Monate in rows, gewichtet mit der gemessenen Wärme.
+     Anlagenwerte (Heizlast, Vorlauf, Außeneinheit …) stammen aus den gespeicherten Reglern der Rechner-Karte. */
+  _modelAz(rows) {
+    const M = window.wpEffizienzModel;
+    if (!M || !M.compute) return null;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('wp-effizienz-card:' + (this._config.simulator_key || 'default')) || 'null'); } catch (e) { saved = null; }
+    const p = Object.assign({}, M.defaults, (saved && saved.p) || {}, { pc0Live: 0 });
+    let q = 0, e = 0;
+    for (const m of rows) {
+      if (m.t == null || m.qH < this._config.min_kwh) continue;
+      const s = M.compute(Object.assign({}, p, { ta: m.t }));
+      if (!(s.cop > 0)) continue;
+      q += m.qH;
+      e += m.qH / s.cop;
+    }
+    return e > 0 ? q / e : null;
+  }
+
   _life() {
     const c = this._config;
     const g = (id) => (this._hass && this._hass.states[id] ? wpNum(this._hass.states[id].state) : null);
@@ -230,6 +250,9 @@ class WpJazCard extends HTMLElement {
     const first = active.length ? active[0].date : null;
     const firstLbl = first ? `${WPJAZ_MONTHS[first.getMonth()]} ${first.getFullYear()}` : '–';
 
+    if (!window.wpEffizienzModel && !this._mdlRetry) this._mdlRetry = setTimeout(() => { this._mdlRetry = null; if (window.wpEffizienzModel) this._render(); }, 1500);
+    const model = this._modelAz(stats.filter((m) => m.date >= seasonStart));
+    const mDiff = model != null && vSeason.azH != null ? (vSeason.azH / model - 1) * 100 : null;
     const diff = vSeason.azH != null && c.scop35 ? ((vSeason.azH / c.scop35 - 1) * 100) : null;
     const scopCls = vSeason.azH == null ? '' : vSeason.azH >= c.scop35 ? 'good' : vSeason.azH >= c.scop55 ? 'ok' : 'bad';
 
@@ -244,6 +267,7 @@ class WpJazCard extends HTMLElement {
         <div class="lbl">SCOP-Vergleich Heizperiode ${seasonLbl}</div>
         <div class="big ${scopCls}">${wpFmt(vSeason.azH)}</div>
         <div class="sub">nur Heizen · Datenblatt ${wpFmt(c.scop35)} (35 °C)${diff == null ? '' : ` · ${diff >= 0 ? '+' : ''}${wpFmt(diff, 0)} %`}</div>
+        ${model == null ? '' : `<div class="sub">Rechner-Modell ${wpFmt(model)}${mDiff == null ? '' : ` · gemessen ${mDiff >= 0 ? '+' : ''}${wpFmt(mDiff, 0)} %`}</div>`}
       </div>
       <div class="tile">
         <div class="lbl">Seit Inbetriebnahme</div>
@@ -296,6 +320,7 @@ class WpJazCard extends HTMLElement {
           <b>JAZ</b> = Wärme ÷ Strom über 12 Monate, inkl. Warmwasser und Heizstab.
           <b>SCOP</b> ist ein Normwert (EN 14825, mittleres Klima, nur Raumheizung). Vergleichbar ist deshalb die gemessene
           Arbeitszahl <i>Heizen</i> über die Heizperiode: mit Fußbodenheizung gegen den Wert bei 35 °C.<br>
+          <b>Rechner-Modell</b>: Arbeitszahl, die der Effizienz-Rechner für die monatlichen Außentemperaturen der Heizperiode berechnet (mit deinen Reglerwerten, gewichtet mit der gemessenen Wärme). Weicht die Messung deutlich ab, hilft im Rechner der Regler „Zusätzlicher COP-Abfall über 35 °C“ und die Prüfung von Heizlast und Vorlauf.<br>
           Grundlage sind die internen Energiezähler der Wärmepumpe (EMS-ESP), kein geeichter Wärmemengen- oder Stromzähler.
           Hilfsenergie wie Pumpen und Standby ist darin evtl. nicht vollständig enthalten, die reale JAZ liegt dann etwas niedriger.
         </div>`;

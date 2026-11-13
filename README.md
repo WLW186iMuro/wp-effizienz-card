@@ -75,6 +75,7 @@ Weitere Optionen: `heat_heating`, `heat_dhw`, `el_heating`, `el_dhw` (Listen mö
 ## Hinweise
 
 - Der Effizienz-Rechner ist ein Rechenmodell, kein Messgerät. Grundlage sind die Kennwerte der Buderus-Planungsunterlage WLW176i/186i AR (2024/04) und der Rechenkern des Simulators von **Matthias Röckl** ([bosch-buderus-wp.github.io](https://bosch-buderus-wp.github.io/), MIT-Lizenz, Verwendung vom Autor erlaubt). Details und Lizenztext in [NOTICE.md](NOTICE.md).
+- Sind beide Karten installiert, zeigt die JAZ-Karte unter dem SCOP-Vergleich zusätzlich die „Rechner-Modell“-Arbeitszahl der Heizperiode (Außentemperatur je Monat, deine Reglerwerte aus dem Effizienz-Rechner, gewichtet mit der gemessenen Wärme) und die Abweichung der Messung davon. Hat der Rechner einen eigenen `storage_key`, gibt man ihn in der JAZ-Karte als `simulator_key` an.
 - Die JAZ-Karte nutzt die internen Energiezähler der Wärmepumpe, keinen geeichten Zähler. Die reale JAZ liegt etwas niedriger, weil Hilfsenergie darin evtl. fehlt.
 - Privates Hobbyprojekt, keine Verbindung zu Bosch oder Buderus. Die Namen sind Marken der jeweiligen Inhaber. Nutzung auf eigene Verantwortung; die Karten verändern keine Einstellungen an der Heizung.
 
