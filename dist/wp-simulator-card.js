@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.6.1";
+const WPS_VERSION = "3.6.2";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -18,23 +18,33 @@ const WPS_PROFILES = {
   "7 kW": { th: { "-20": [5.0, 2.0], "-15": [5.9, 2.2], "-10": [5.86, 2.23], "-7": [6.71, 2.36], "2": [7.09, 2.83, 2.87, 4.06],
                   "7": [7.97, 3.07, 2.84, 4.85, 7.45], "15": [9.9, 0], "20": [10.0, 0] },
             min: { "-20": 2.0, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2.0, "20": 2.2 },
+            q45: [4.75, 5.2, 6.0, 5.7, 7.05, 7.8, 9.05, 10.0], q55: [3.6, 5.05, 5.25, 5.05, 5.7, 7.5, 8.55, 8.9],
+            m45: [1.8, 1.1, 1.4, 1.6, 1.7, 1.4, 1.85, 2.1], m55: [1.7, 1.05, 1.3, 1.45, 1.55, 1.3, 1.7, 2.0],
             el: [300, 2510, 0.1195], cop: [0.56, 0.008, 0.015], as: 0.8 },
   /* Weitere Größen: Werte aus Planungsunterlage Tabelle 8.3.1 (Max. Heizleistung/COP bei -7, +2, +7 °C, W55 bei +7 °C, Teillast-Nennpunkte)
      und Röckls Simulator (-10 °C). Die Punkte bei -20, -15, +15 und +20 °C sowie die Mindestleistung stammen aus Bild 9 (abgelesen, ±0,1 kW):
      Kurve 1 = Min. 4/5/7 kW, Kurve 2 = Min. 10/12 kW (liegt im Bild bei +2 °C bei ca. 3,1 kW, die Tabelle nennt als Modulationsbereich 2,1 kW),
-     Kurven 3–7 = Max. 4/5/7/10/12 kW. COP-Parameter an den Datenblattwerten angepasst (Abweichung 1–5 %);
+     Kurven 3–7 = Max. 4/5/7/10/12 kW; Bild 11 und 13 (45/55 °C) liefern q45/q55/m45/m55. COP-Parameter an den Datenblattwerten angepasst (Abweichung 1–5 %);
      nur das 7-kW-Profil ist an einer echten Anlage kalibriert. */
   "4 kW": { th: { "-20": [2.55, 0], "-15": [3.0, 0], "-10": [3.63, 0], "-7": [3.92, 2.89], "2": [4.31, 3.21, 2.09, 3.94], "7": [4.99, 3.59, 2.84, 4.85, 4.53], "15": [6.7, 0], "20": [7.4, 0] },
             min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
+            q45: [2.35, 2.8, 3.3, 3.65, 4.3, 4.6, 6.6, 7.2], q55: [2.25, 2.65, 3.2, 3.55, 3.9, 4.55, 6.25, 6.85],
+            m45: [1.8, 1.1, 1.4, 1.6, 1.7, 1.4, 1.85, 2.1], m55: [1.7, 1.05, 1.3, 1.45, 1.55, 1.3, 1.7, 2.0],
             el: [300, 1340, 0.26], cop: [0.64, 0.002, 0], as: 1 },
   "5 kW": { th: { "-20": [4.0, 0], "-15": [4.75, 0], "-10": [5.45, 0], "-7": [5.42, 2.51], "2": [6.43, 2.91, 2.41, 3.92], "7": [6.8, 3.16, 2.84, 4.85, 6.18], "15": [8.1, 0], "20": [8.6, 0] },
             min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
+            q45: [3.75, 4.4, 5.1, 5.25, 6.5, 6.9, 7.75, 8.6], q55: [3.65, 4.3, 5.1, 4.85, 5.95, 6.2, 7.35, 8.1],
+            m45: [1.8, 1.1, 1.4, 1.6, 1.7, 1.4, 1.85, 2.1], m55: [1.7, 1.05, 1.3, 1.45, 1.55, 1.3, 1.7, 2.0],
             el: [300, 2210, 0.18], cop: [0.63, 0.01, 0.01], as: 1 },
   "10 kW": { th: { "-20": [7.3, 0], "-15": [8.9, 0], "-10": [9.99, 0], "-7": [9.57, 2.47], "2": [11.66, 2.84, 4.59, 4.48], "7": [12.67, 3, 5.58, 4.84, 12.07], "15": [13.5, 0], "20": [13.0, 0] },
             min: { "-20": 2.6, "-15": 2.9, "-10": 3.5, "-7": 3.9, "2": 3.1, "7": 2.5, "15": 3.2, "20": 3.65 },
+            q45: [7.3, 8.4, 9.55, 9.65, 11.55, 12.35, 12.8, 12.25], q55: [6.95, 8.0, 9.1, 9.5, 11.4, 11.95, 12.45, 12.4],
+            m45: [2.3, 2.7, 3.3, 3.6, 2.85, 2.15, 2.75, 3.2], m55: [2.2, 2.6, 3.2, 3.5, 2.85, 2.3, 2.9, 3.35],
             el: [500, 4110, 0.13], cop: [0.67, -0.006, -0.0025], as: 1 },
   "12 kW": { th: { "-20": [7.85, 0], "-15": [10.6, 0], "-10": [11.82, 0], "-7": [11.56, 2.43], "2": [12.61, 2.64, 4.59, 4.48], "7": [12.9, 2.71, 5.58, 4.84, 12.84], "15": [13.5, 0], "20": [13.05, 0] },
             min: { "-20": 2.6, "-15": 2.9, "-10": 3.5, "-7": 3.9, "2": 3.1, "7": 2.5, "15": 3.2, "20": 3.65 },
+            q45: [7.3, 10.1, 11.45, 11.65, 13.7, 13.2, 12.85, 12.6], q55: [7.8, 9.65, 11.1, 10.85, 12.4, 12.65, 12.5, 13.2],
+            m45: [2.3, 2.7, 3.3, 3.6, 2.85, 2.15, 2.75, 3.2], m55: [2.2, 2.6, 3.2, 3.5, 2.85, 2.3, 2.9, 3.35],
             el: [500, 4780, 0.12], cop: [0.69, -0.006, 0], as: 1 },
 };
 /* Parallelverschiebung der Heizkurve (an der Anlage gemessen, per Karten-Konfiguration shift: {...} anpassbar):
@@ -85,24 +95,53 @@ function wpsCOP(Tflow, Ta, model) {
   return eta * (1 + f * (WPS_C.LIFT_REF - lift)) * (1 + g * (Tflow - 35)) * (wpsK(Tc) / lift);
 }
 
+/* Stützpunkte bei 45 und 55 °C Vorlauf (Bild 11 und 13) liegen auf diesen Außentemperaturen */
+const WPS_TA_GRID = [-20, -15, -10, -7, 2, 7, 15, 20];
+function wpsAtGrid(arr, Ta) {
+  const g = WPS_TA_GRID;
+  if (Ta <= g[0]) return arr[0];
+  if (Ta >= g[g.length - 1]) return arr[arr.length - 1];
+  for (let i = 0; i < g.length - 1; i++) {
+    if (Ta >= g[i] && Ta <= g[i + 1]) return arr[i] + ((Ta - g[i]) / (g[i + 1] - g[i])) * (arr[i + 1] - arr[i]);
+  }
+  return arr[arr.length - 1];
+}
+/* Wert bei Vorlauf Tflow aus den Kurven für 35/45/55 °C: stückweise linear, außerhalb mit der Steigung des Randstücks */
+function wpsAtFlow(v35, v45, v55, Tflow, clampLow) {
+  if (Tflow <= 35) return clampLow ? v35 : v35 + ((v45 - v35) / 10) * (Tflow - 35);
+  if (Tflow <= 45) return v35 + ((v45 - v35) / 10) * (Tflow - 35);
+  return v45 + ((v55 - v45) / 10) * (Tflow - 45);
+}
+
 function wpsCapMax(Ta, Tflow, model) {
+  const prof = WPS_PROFILES[model] || WPS_PROFILES["7 kW"];
   const c35 = wpsCap35(Ta, model);
+  if (prof.q45 && prof.q55) {
+    const c45 = wpsAtGrid(prof.q45, Ta), c55 = wpsAtGrid(prof.q55, Ta);
+    /* unter 35 °C Vorlauf liegen keine Kurven vor: Zunahme je K aus dem Stück 35–45 °C, auf 0 … 0,5 %/K begrenzt (Ausreißer im Bild) */
+    if (Tflow < 35) return c35 * (1 + wpsClamp((c35 - c45) / Math.max(1e-6, c35) / 10, 0, 0.005) * (35 - Tflow));
+    return Math.max(0, wpsAtFlow(c35, c45, c55, Tflow, false));
+  }
   const a7 = wpsCap35(7, model);
-  const w55 = (WPS_PROFILES[model] || WPS_PROFILES["7 kW"]).th["7"][4];
+  const w55 = prof.th["7"][4];
   const k = w55 && a7 > 0 ? (1 - w55 / a7) / 20 : 0;
   return Math.max(0, c35 * (1 - k * (Tflow - 35)));
 }
 
-/* Mindestheizleistung (kleinste Verdichterdrehzahl) laut Bild 9, Kurve 1 */
+/* Mindestheizleistung (kleinste Verdichterdrehzahl) laut Bild 9, 11 und 13 (Kurve 1 bzw. 2) */
 function wpsCapMin(Ta, Tflow, model) {
-  const mn = (WPS_PROFILES[model] || WPS_PROFILES["7 kW"]).min;
+  const prof = WPS_PROFILES[model] || WPS_PROFILES["7 kW"];
+  const mn = prof.min;
   const p = Object.keys(mn).map((k) => ({ Ta: +k, kW: mn[k] })).sort((a, b) => a.Ta - b.Ta);
-  if (Ta <= p[0].Ta) return p[0].kW;
-  if (Ta >= p[p.length - 1].Ta) return p[p.length - 1].kW;
-  for (let i = 0; i < p.length - 1; i++) {
-    if (Ta >= p[i].Ta && Ta <= p[i + 1].Ta) return p[i].kW + ((Ta - p[i].Ta) / (p[i + 1].Ta - p[i].Ta)) * (p[i + 1].kW - p[i].kW);
+  let m35 = p[p.length - 1].kW;
+  if (Ta <= p[0].Ta) m35 = p[0].kW;
+  else if (Ta < p[p.length - 1].Ta) {
+    for (let i = 0; i < p.length - 1; i++) {
+      if (Ta >= p[i].Ta && Ta <= p[i + 1].Ta) { m35 = p[i].kW + ((Ta - p[i].Ta) / (p[i + 1].Ta - p[i].Ta)) * (p[i + 1].kW - p[i].kW); break; }
+    }
   }
-  return p[p.length - 1].kW;
+  if (!(prof.m45 && prof.m55)) return m35;
+  return Math.max(0.5, wpsAtFlow(m35, wpsAtGrid(prof.m45, Ta), wpsAtGrid(prof.m55, Ta), Tflow, true));
 }
 
 function wpsModCalib(Ta, model) {
