@@ -1,5 +1,5 @@
-/* WP Effizienz-Rechner – Buderus WLW186i mit 7-kW-Außeneinheit
- * Außeneinheit WLW-7 MB AR (WLW186i-7 AR), Inneneinheit WLW186i-12 TP70. Kennwerte aus der Buderus-Planungsunterlage 2024/04.
+/* WP Effizienz-Rechner – Buderus WLW176i/186i AR, Außeneinheiten 4, 5, 7, 10 und 12 kW (am besten geprüft: 7 kW)
+ * Inneneinheit WLW186i-12 TP70. Kennwerte aus der Buderus-Planungsunterlage 2024/04; nur das 7-kW-Profil ist an einer Anlage kalibriert.
  * Regler verschieben, Anlagenschema und COP rechnen live mit. Der Rechenkern ist ein Port des Simulators von
  * Matthias Röckl (https://bosch-buderus-wp.github.io/, MIT-Lizenz, Copyright (c) 2026 Matthias Röckl; siehe NOTICE.md),
  * ergänzt um die Wärmeabgabe der Fußbodenheizung (Deckung der Heizlast) und das Takten unter der Mindestleistung.
@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.5.3";
+const WPS_VERSION = "3.6.0";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -19,6 +19,22 @@ const WPS_PROFILES = {
                   "7": [7.97, 3.07, 2.84, 4.85, 7.45], "15": [9.9, 0], "20": [10.0, 0] },
             min: { "-20": 2.0, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2.0, "20": 2.2 },
             el: [300, 2510, 0.1195], cop: [0.56, 0.008, 0.015], as: 0.8 },
+  /* Weitere Größen: Werte aus Planungsunterlage Tabelle 8.3.1 (Max. Heizleistung/COP bei -7, +2, +7 °C, W55 bei +7 °C, Teillast-Nennpunkte)
+     und aus Röckls Simulator (-10 °C). -20/-15 °C sind aus dem Verlauf der 7-kW-Kurve abgeleitet, 15/20 °C auf den Wert bei +7 °C begrenzt.
+     Mindestleistung: Kurve 1 (Bild 9) gilt für 4/5/7 kW, für 10/12 kW ist sie nach dem Modulationsbereich bei +2 °C (2,1 statt 1,8 kW)
+     hochskaliert. COP-Parameter an den Datenblattwerten angepasst (Abweichung 1–5 %); nur das 7-kW-Profil ist an einer echten Anlage kalibriert. */
+  "4 kW": { th: { "-20": [3.1, 0], "-15": [3.65, 0], "-10": [3.63, 0], "-7": [3.92, 2.89], "2": [4.31, 3.21, 2.09, 3.94], "7": [4.99, 3.59, 2.84, 4.85, 4.53], "15": [4.99, 0], "20": [4.99, 0] },
+            min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
+            el: [300, 1340, 0.26], cop: [0.64, 0.002, 0], as: 1 },
+  "5 kW": { th: { "-20": [4.65, 0], "-15": [5.49, 0], "-10": [5.45, 0], "-7": [5.42, 2.51], "2": [6.43, 2.91, 2.41, 3.92], "7": [6.8, 3.16, 2.84, 4.85, 6.18], "15": [6.8, 0], "20": [6.8, 0] },
+            min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
+            el: [300, 2210, 0.18], cop: [0.63, 0.01, 0.01], as: 1 },
+  "10 kW": { th: { "-20": [8.52, 0], "-15": [10.06, 0], "-10": [9.99, 0], "-7": [9.57, 2.47], "2": [11.66, 2.84, 4.59, 4.48], "7": [12.67, 3, 5.58, 4.84, 12.07], "15": [12.67, 0], "20": [12.67, 0] },
+            min: { "-20": 2.27, "-15": 1.48, "-10": 1.76, "-7": 1.99, "2": 2.1, "7": 1.87, "15": 2.27, "20": 2.5 },
+            el: [500, 4110, 0.13], cop: [0.67, -0.006, -0.0025], as: 1 },
+  "12 kW": { th: { "-20": [10.09, 0], "-15": [11.9, 0], "-10": [11.82, 0], "-7": [11.56, 2.43], "2": [12.61, 2.64, 4.59, 4.48], "7": [12.9, 2.71, 5.58, 4.84, 12.84], "15": [12.9, 0], "20": [12.9, 0] },
+            min: { "-20": 2.27, "-15": 1.48, "-10": 1.76, "-7": 1.99, "2": 2.1, "7": 1.87, "15": 2.27, "20": 2.5 },
+            el: [500, 4780, 0.12], cop: [0.69, -0.006, 0], as: 1 },
 };
 /* Parallelverschiebung der Heizkurve (an der Anlage gemessen, per Karten-Konfiguration shift: {...} anpassbar):
    RSHIFT = K Vorlauf je K Raumsoll, OSHIFT = K Vorlauf je K Temperaturanhebung, RREF = Bezugs-Raumsoll
@@ -366,6 +382,8 @@ const WPS_CSS = `
   .warn { margin-top:6px; padding:4px 8px; border-radius:6px; font-size:12px; color:var(--warning-color,#ffa726);
           background:rgba(255,167,38,.1); display:none; }
   .warn.show { display:block; }
+  .mdl { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .mdl select { background:var(--secondary-background-color); color:var(--primary-text-color); border:1px solid var(--divider-color); border-radius:6px; padding:3px 6px; font:inherit; }
   .credit { font-size:11px; color:var(--secondary-text-color); margin-top:8px; line-height:1.35; }
   .credit a { color:var(--primary-color); text-decoration:none; }
   .credit a:hover { text-decoration:underline; }
@@ -377,7 +395,7 @@ const WPS_CSS = `
 `;
 
 /* Schlüssel, die „Als Standard speichern“ sichert */
-const WPS_STD_KEYS = WPS_CONTROLS.map((r) => r[0]).concat(["effMod"]);
+const WPS_STD_KEYS = WPS_CONTROLS.map((r) => r[0]).concat(["effMod", "model"]);
 
 class WpSimulatorCard extends HTMLElement {
   setConfig(config) {
@@ -637,6 +655,7 @@ class WpSimulatorCard extends HTMLElement {
       <div class="sec">
         ${rows}
         <div class="adv">
+          <label class="mdl">Außeneinheit <select id="i-model">${Object.keys(WPS_PROFILES).sort((a, b) => parseFloat(a) - parseFloat(b)).map((m) => `<option value="${m}"${m === p.model ? " selected" : ""}>${m}${m === "7 kW" ? "" : " (Datenblatt)"}</option>`).join("")}</select></label>
           <label><input type="checkbox" id="i-eff" ${p.effMod ? "checked" : ""}> Effizienz abhängig von Modulation</label>
         </div>
       </div>
@@ -685,7 +704,7 @@ class WpSimulatorCard extends HTMLElement {
           PC0-Mindestmodulation: Die Simulation nimmt den Regler, der zur eingestellten Außentemperatur passt (fett, der andere ist ausgegraut). Den Live-Wert aus EMS-ESP übernimmt die Karte im Heizbetrieb in den Regler, der zur echten Lufttemperatur TL2 passt (unter 4 °C bzw. ab 5 °C; dazwischen schaltet die WP um, dort wird nichts übernommen).
           PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur der Wert aus „WP Primärkreis Durchfluss berechnet“, sonst dieselbe Formel wie im Helfer (unter 50 %: 610 + 6,2 l/h je %, ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %)). Ändert sich die Formel im Helfer, muss sie in der Karte (WPS_PC0_A/WPS_PC0_B) mitgezogen werden.
           Ein Bestwert zählt nur, wenn die Heizlast zu mindestens 98 % gedeckt ist. „Als Standard speichern“ merkt sich die Reglerstellung in diesem Browser.
-          Kennwerte: WLW-7 MB AR laut Buderus-Planungsunterlage 2024/04. Unter der Mindestleistung taktet die WP; Taktverluste nach EN 14825 sind eingerechnet.</details>
+          Kennwerte laut Buderus-Planungsunterlage 2024/04. Das Profil 7 kW (WLW-7 MB AR) ist an einer Anlage geprüft, die anderen Größen sind aus den Datenblattwerten abgeleitet (Pumpenkennlinie PC0 und Verluste gelten für die 7-kW-Anlage). Unter der Mindestleistung taktet die WP; Taktverluste nach EN 14825 sind eingerechnet.</details>
         <div class="credit">Dieser Rechner basiert auf dem Simulator von <a href="https://bosch-buderus-wp.github.io/" target="_blank" rel="noopener noreferrer">Matthias Röckl (bosch-buderus-wp.github.io)</a> und wurde für diese Karte angepasst: eingebunden in Home Assistant mit Live-Werten aus EMS-ESP und um die Wärmeabgabe der Fußbodenheizung sowie das Takten unter der Mindestleistung erweitert.</div>
       </div>
       </div>
@@ -698,6 +717,7 @@ class WpSimulatorCard extends HTMLElement {
       if (el.dataset.k === "ta") this._taAuto = false;
       this._save(); this._recalc();
     }));
+    this._$("i-model").addEventListener("change", (e) => { this._p.model = e.target.value; this._save(); this._recalc(); });
     this._$("i-eff").addEventListener("change", (e) => { this._p.effMod = e.target.checked; this._save(); this._recalc(); });
     this._$("b-load").addEventListener("click", () => this._loadFromEms());
     this._$("b-tip").addEventListener("click", () => {
@@ -748,6 +768,7 @@ class WpSimulatorCard extends HTMLElement {
   _syncInputs() {
     for (const [k] of this._controls) { const el = this._$("i-" + k); if (el) el.value = this._p[k]; }
     this._$("i-eff").checked = !!this._p.effMod;
+    this._$("i-model").value = WPS_PROFILES[this._p.model] ? this._p.model : "7 kW";
   }
 
   /* --- Berechnung & Ausgabe --- */
@@ -788,7 +809,7 @@ class WpSimulatorCard extends HTMLElement {
 
   _bestKey() {
     const p = this._p;
-    return [p.ta.toFixed(1), p.ti, p.nat, p.loadKw, WPS_C.SPLIT ? p.limB : "-", p.flow150, p.pc0modmin, p.pc0modwarm, p.effMod ? 1 : 0].join("|");
+    return [p.ta.toFixed(1), p.ti, p.nat, p.loadKw, WPS_C.SPLIT ? p.limB : "-", p.flow150, p.pc0modmin, p.pc0modwarm, p.effMod ? 1 : 0, p.model].join("|");
   }
 
   _trackBest() {
@@ -1039,7 +1060,7 @@ if (!customElements.get("wp-simulator-card")) {
   window.customCards.push({
     type: "wp-simulator-card",
     name: "WP Effizienz-Rechner",
-    description: "Effizienz-Rechner für Buderus WLW186i-7 AR mit TP70 – Regler verschieben, COP und Deckung der Heizlast sehen",
+    description: "Effizienz-Rechner für Buderus WLW176i/186i AR (4–12 kW, am besten geprüft: 7 kW) mit TP70 – Regler verschieben, COP und Deckung der Heizlast sehen",
     preview: false,
   });
   console.info(`%c WP-EFFIZIENZ-CARD %c ${WPS_VERSION} `, "background:#00897b;color:#fff", "background:#333;color:#fff");

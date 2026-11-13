@@ -43,7 +43,7 @@ Die Einstellungen der Wärmepumpe (Fußpunkt, Auslegungstemperatur, Raumsoll, Sp
 ## Voraussetzungen
 
 - Home Assistant mit EMS-ESP (MQTT-Discovery) und den Standardnamen `sensor.boiler_…`, `sensor.thermostat_…`, `number.thermostat_…`
-- Das Rechenmodell ist für die **7-kW-Außeneinheit (WLW-7 MB AR) mit Inneneinheit TP70 und Fußbodenheizung** hinterlegt. Andere Leistungsgrößen brauchen eigene Kennwerte in `WPS_PROFILES` in `dist/wp-simulator-card.js`.
+- Das Rechenmodell kennt die Außeneinheiten **4, 5, 7, 10 und 12 kW** (WLW176i/186i AR, Inneneinheit TP70, Fußbodenheizung). Die Größe wählst du im Rechner unter „Außeneinheit“ oder per `defaults: { model: "10 kW" }`. **Nur das 7-kW-Profil ist an einer echten Anlage geprüft.** Die anderen Größen sind aus den Datenblattwerten der Buderus-Planungsunterlage (Tabelle 8.3.1) abgeleitet; Abweichung der Modell-COPs vom Datenblatt 1–5 %. Die Kurven bei −20/−15 °C sind aus dem 7-kW-Verlauf abgeschätzt, die Mindestleistung der 10/12-kW-Geräte ist hochskaliert. Die Pumpenkennlinie PC0 stammt von der 7-kW-Anlage. Rückmeldungen mit Messwerten anderer Größen sind willkommen.
 - Die JAZ-Karte nutzt `recorder/statistics_during_period`. Die Energiezähler der Wärmepumpe müssen also in der Langzeitstatistik stehen (Standard bei EMS-ESP-Entitäten mit `state_class`).
 
 Ein eigener Helfer ist nicht nötig. Den Primärkreis-Durchfluss rechnet die Karte mit der eingebauten Pumpenkennlinie selbst. Wer einen eigenen Sensor hat, gibt ihn unter `entities: { pc0flow: … }` an.
