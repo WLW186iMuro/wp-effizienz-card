@@ -382,7 +382,7 @@ const WPS_CSS = `
   .legend i.dash { border-top-style:dashed; }
   .chartwrap { position:relative; touch-action:pan-y; }
   svg { display:block; width:100%; height:auto; }
-  #diag { max-width:1200px; margin:0 auto; }
+  #diag { max-width:1080px; margin:0 auto; }
   .ax text { fill:var(--secondary-text-color); font-size:13px; }
   .ax line { stroke:var(--divider-color); }
   .grid line { stroke:var(--divider-color); stroke-opacity:.55; }
