@@ -72,6 +72,17 @@ season_start_month: 7 # Beginn der Heizperiode
 
 Weitere Optionen: `heat_heating`, `heat_dhw`, `el_heating`, `el_dhw` (Listen möglich), `outdoor`, `months`, `min_kwh`.
 
+## Regler „Zusätzlicher COP-Abfall über 35 °C“ einstellen
+
+Der Regler senkt den berechneten COP für jedes Kelvin Vorlauftemperatur **über 35 °C** um den eingestellten Prozentsatz. Bei 2 %/K sind das −20 % bei 45 °C und −40 % bei 55 °C. Unter 35 °C Vorlauf wirkt er nicht, für eine Fußbodenheizung mit niedrigem Vorlauf bleibt er auf 0.
+
+1. Zuerst die Anlage im Rechner richtig einstellen: Außeneinheit, Heizlast und Normaußentemperatur, Heizkurve (Fußpunkt, Auslegungstemperatur) und Heizgrenze.
+2. Warten, bis die JAZ-Karte mehrere Heizmonate hat (besser eine ganze Heizperiode). Dort steht unter dem SCOP-Vergleich „Rechner-Modell … · gemessen −x %“.
+3. Gehört die Abweichung zu einem hohen Vorlauf (Heizkörper, ungedämmtes Haus), den Wert so schätzen: **Abfall in %/K ≈ (1 − Messung ÷ Modell) ÷ (mittlerer Vorlauf − 35 K) × 100**. Beispiel: Modell 3,6, Messung 3,1 → 0,14; mittlerer Vorlauf 50 °C → 15 K → ca. 0,9 %/K.
+4. Wert einstellen („Als Standard speichern“ oder `defaults: { copSlope: 0.9 }`), die JAZ-Karte neu laden und prüfen, ob die Abweichung gegen 0 geht. Bei Bedarf nachstellen. Sinnvolle Werte liegen meist zwischen 0 und 2 %/K, ein negativer Wert hebt den COP an, falls das Modell zu pessimistisch ist.
+
+Nicht alle Abweichungen kommen von der Vorlauftemperatur. Heizstab-Betrieb (steckt in der Messung, nicht im Modell), Abtauphasen, Hilfsenergie und falsche Heizlast-Werte wirken ähnlich. Den Regler deshalb erst nach diesen Prüfungen und nur bei hohem Vorlauf verwenden.
+
 ## Hinweise
 
 - Der Effizienz-Rechner ist ein Rechenmodell, kein Messgerät. Grundlage sind die Kennwerte der Buderus-Planungsunterlage WLW176i/186i AR (2024/04) und der Rechenkern des Simulators von **Matthias Röckl** ([bosch-buderus-wp.github.io](https://bosch-buderus-wp.github.io/), MIT-Lizenz, Verwendung vom Autor erlaubt). Details und Lizenztext in [NOTICE.md](NOTICE.md).
