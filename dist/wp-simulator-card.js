@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.6.0";
+const WPS_VERSION = "3.6.1";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -20,20 +20,21 @@ const WPS_PROFILES = {
             min: { "-20": 2.0, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2.0, "20": 2.2 },
             el: [300, 2510, 0.1195], cop: [0.56, 0.008, 0.015], as: 0.8 },
   /* Weitere Größen: Werte aus Planungsunterlage Tabelle 8.3.1 (Max. Heizleistung/COP bei -7, +2, +7 °C, W55 bei +7 °C, Teillast-Nennpunkte)
-     und aus Röckls Simulator (-10 °C). -20/-15 °C sind aus dem Verlauf der 7-kW-Kurve abgeleitet, 15/20 °C auf den Wert bei +7 °C begrenzt.
-     Mindestleistung: Kurve 1 (Bild 9) gilt für 4/5/7 kW, für 10/12 kW ist sie nach dem Modulationsbereich bei +2 °C (2,1 statt 1,8 kW)
-     hochskaliert. COP-Parameter an den Datenblattwerten angepasst (Abweichung 1–5 %); nur das 7-kW-Profil ist an einer echten Anlage kalibriert. */
-  "4 kW": { th: { "-20": [3.1, 0], "-15": [3.65, 0], "-10": [3.63, 0], "-7": [3.92, 2.89], "2": [4.31, 3.21, 2.09, 3.94], "7": [4.99, 3.59, 2.84, 4.85, 4.53], "15": [4.99, 0], "20": [4.99, 0] },
+     und Röckls Simulator (-10 °C). Die Punkte bei -20, -15, +15 und +20 °C sowie die Mindestleistung stammen aus Bild 9 (abgelesen, ±0,1 kW):
+     Kurve 1 = Min. 4/5/7 kW, Kurve 2 = Min. 10/12 kW (liegt im Bild bei +2 °C bei ca. 3,1 kW, die Tabelle nennt als Modulationsbereich 2,1 kW),
+     Kurven 3–7 = Max. 4/5/7/10/12 kW. COP-Parameter an den Datenblattwerten angepasst (Abweichung 1–5 %);
+     nur das 7-kW-Profil ist an einer echten Anlage kalibriert. */
+  "4 kW": { th: { "-20": [2.55, 0], "-15": [3.0, 0], "-10": [3.63, 0], "-7": [3.92, 2.89], "2": [4.31, 3.21, 2.09, 3.94], "7": [4.99, 3.59, 2.84, 4.85, 4.53], "15": [6.7, 0], "20": [7.4, 0] },
             min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
             el: [300, 1340, 0.26], cop: [0.64, 0.002, 0], as: 1 },
-  "5 kW": { th: { "-20": [4.65, 0], "-15": [5.49, 0], "-10": [5.45, 0], "-7": [5.42, 2.51], "2": [6.43, 2.91, 2.41, 3.92], "7": [6.8, 3.16, 2.84, 4.85, 6.18], "15": [6.8, 0], "20": [6.8, 0] },
+  "5 kW": { th: { "-20": [4.0, 0], "-15": [4.75, 0], "-10": [5.45, 0], "-7": [5.42, 2.51], "2": [6.43, 2.91, 2.41, 3.92], "7": [6.8, 3.16, 2.84, 4.85, 6.18], "15": [8.1, 0], "20": [8.6, 0] },
             min: { "-20": 2, "-15": 1.3, "-10": 1.55, "-7": 1.75, "2": 1.85, "7": 1.65, "15": 2, "20": 2.2 },
             el: [300, 2210, 0.18], cop: [0.63, 0.01, 0.01], as: 1 },
-  "10 kW": { th: { "-20": [8.52, 0], "-15": [10.06, 0], "-10": [9.99, 0], "-7": [9.57, 2.47], "2": [11.66, 2.84, 4.59, 4.48], "7": [12.67, 3, 5.58, 4.84, 12.07], "15": [12.67, 0], "20": [12.67, 0] },
-            min: { "-20": 2.27, "-15": 1.48, "-10": 1.76, "-7": 1.99, "2": 2.1, "7": 1.87, "15": 2.27, "20": 2.5 },
+  "10 kW": { th: { "-20": [7.3, 0], "-15": [8.9, 0], "-10": [9.99, 0], "-7": [9.57, 2.47], "2": [11.66, 2.84, 4.59, 4.48], "7": [12.67, 3, 5.58, 4.84, 12.07], "15": [13.5, 0], "20": [13.0, 0] },
+            min: { "-20": 2.6, "-15": 2.9, "-10": 3.5, "-7": 3.9, "2": 3.1, "7": 2.5, "15": 3.2, "20": 3.65 },
             el: [500, 4110, 0.13], cop: [0.67, -0.006, -0.0025], as: 1 },
-  "12 kW": { th: { "-20": [10.09, 0], "-15": [11.9, 0], "-10": [11.82, 0], "-7": [11.56, 2.43], "2": [12.61, 2.64, 4.59, 4.48], "7": [12.9, 2.71, 5.58, 4.84, 12.84], "15": [12.9, 0], "20": [12.9, 0] },
-            min: { "-20": 2.27, "-15": 1.48, "-10": 1.76, "-7": 1.99, "2": 2.1, "7": 1.87, "15": 2.27, "20": 2.5 },
+  "12 kW": { th: { "-20": [7.85, 0], "-15": [10.6, 0], "-10": [11.82, 0], "-7": [11.56, 2.43], "2": [12.61, 2.64, 4.59, 4.48], "7": [12.9, 2.71, 5.58, 4.84, 12.84], "15": [13.5, 0], "20": [13.05, 0] },
+            min: { "-20": 2.6, "-15": 2.9, "-10": 3.5, "-7": 3.9, "2": 3.1, "7": 2.5, "15": 3.2, "20": 3.65 },
             el: [500, 4780, 0.12], cop: [0.69, -0.006, 0], as: 1 },
 };
 /* Parallelverschiebung der Heizkurve (an der Anlage gemessen, per Karten-Konfiguration shift: {...} anpassbar):
