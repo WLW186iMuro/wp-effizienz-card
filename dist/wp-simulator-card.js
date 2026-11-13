@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.7.1";
+const WPS_VERSION = "3.7.2";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -427,7 +427,7 @@ const WPS_CSS = `
           background:rgba(255,167,38,.1); display:none; }
   .warn.show { display:block; }
   .hashelp > label { cursor:pointer; }
-  .qi { display:inline-block; color:var(--primary-color); font-size:11px; }
+  .qi { display:inline-block; color:var(--warning-color, #ffc107); font-size:13px; font-weight:700; line-height:1; vertical-align:-1px; }
   .help { display:none; grid-column:1 / -1; font-size:11.5px; line-height:1.4; color:var(--secondary-text-color); background:var(--secondary-background-color); border-radius:8px; padding:8px 10px; margin:2px 0 4px; }
   .row.open .help { display:block; }
   .mdl { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
