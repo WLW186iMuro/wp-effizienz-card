@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.7.0";
+const WPS_VERSION = "3.7.1";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -426,6 +426,10 @@ const WPS_CSS = `
   .warn { margin-top:6px; padding:4px 8px; border-radius:6px; font-size:12px; color:var(--warning-color,#ffa726);
           background:rgba(255,167,38,.1); display:none; }
   .warn.show { display:block; }
+  .hashelp > label { cursor:pointer; }
+  .qi { display:inline-block; color:var(--primary-color); font-size:11px; }
+  .help { display:none; grid-column:1 / -1; font-size:11.5px; line-height:1.4; color:var(--secondary-text-color); background:var(--secondary-background-color); border-radius:8px; padding:8px 10px; margin:2px 0 4px; }
+  .row.open .help { display:block; }
   .mdl { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
   .mdl select { background:var(--secondary-background-color); color:var(--primary-text-color); border:1px solid var(--divider-color); border-radius:6px; padding:3px 6px; font:inherit; }
   .credit { font-size:11px; color:var(--secondary-text-color); margin-top:8px; line-height:1.35; }
@@ -437,6 +441,13 @@ const WPS_CSS = `
   @media (max-width:520px) { .row { grid-template-columns:minmax(0,1fr) 62px; } .row input[type=range] { grid-column:1 / -1; } }
   @media (prefers-reduced-motion: reduce) { .pipe, .air { animation:none; } }
 `;
+
+/* Erklärungen, die beim Klick auf die Zeile des Reglers erscheinen */
+const WPS_HELP = {
+  copSlope: `<b>Was der Regler tut:</b> Für jedes Kelvin Vorlauftemperatur <b>über 35 °C</b> sinkt der berechnete COP zusätzlich um diesen Prozentsatz (2 %/K: −20 % bei 45 °C, −40 % bei 55 °C). Unter 35 °C Vorlauf wirkt er nicht – bei Fußbodenheizung bleibt er auf 0.<br>
+    <b>Einstellen:</b> 1. Anlage oben richtig eingeben (Außeneinheit, Heizlast, NAT, Heizkurve, Heizgrenze). 2. In der JAZ-Karte mehrere Heizmonate abwarten und „Rechner-Modell … · gemessen −x %“ ablesen. 3. Bei hohem Vorlauf (Heizkörper, ungedämmtes Haus) schätzen: <i>Abfall in %/K ≈ (1 − Messung ÷ Modell) ÷ (mittlerer Vorlauf − 35) × 100</i>, z. B. Modell 3,6 und Messung 3,1 bei 50 °C Vorlauf ≈ 0,9 %/K. 4. Einstellen, „Als Standard speichern“ (oder <i>defaults: { copSlope: 0.9 }</i>), JAZ-Karte neu laden, Abweichung prüfen, nachstellen. Üblich sind 0 bis 2 %/K; negativ hebt den COP an.<br>
+    <b>Vorsicht:</b> Heizstab-Betrieb, Abtauen, Hilfsenergie und falsche Heizlast-Werte drücken die Messung ähnlich. Den Regler nur bei hohem Vorlauf und nach diesen Prüfungen verwenden.`,
+};
 
 /* Schlüssel, die „Als Standard speichern“ sichert */
 const WPS_STD_KEYS = WPS_CONTROLS.map((r) => r[0]).concat(["effMod", "model"]);
@@ -676,8 +687,9 @@ class WpSimulatorCard extends HTMLElement {
     let rows = "", grp = "";
     for (const [k, lbl, min, max, step, , , g] of this._controls) {
       if (g !== grp) { rows += `<div class="grp">${g === "Rahmen" ? "Rahmenbedingungen" : "Einstellungen der Wärmepumpe"}</div>`; grp = g; }
-      rows += `<div class="row" id="r-${k}"><label for="i-${k}">${lbl}</label><span class="v" id="v-${k}"></span>
-        <input type="range" id="i-${k}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${p[k]}"></div>`;
+      const help = WPS_HELP[k];
+      rows += `<div class="row${help ? " hashelp" : ""}" id="r-${k}"><label for="i-${k}">${lbl}${help ? ' <span class="qi" title="Klicken für Erklärung">ⓘ</span>' : ""}</label><span class="v" id="v-${k}"></span>
+        <input type="range" id="i-${k}" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${p[k]}">${help ? `<div class="help">${help}</div>` : ""}</div>`;
     }
     const legend = WPS_SERIES.map(([k, lbl, dash]) =>
       `<span data-s="${k}" title="Klicken: Linie ein-/ausblenden"><i${dash ? ' class="dash"' : ""} style="border-color:${WPS_COL[k]}"></i>${lbl}</span>`).join("");
@@ -760,6 +772,11 @@ class WpSimulatorCard extends HTMLElement {
       if (/^pc0mod/.test(el.dataset.k)) this._pc0Auto = false;
       if (el.dataset.k === "ta") this._taAuto = false;
       this._save(); this._recalc();
+    }));
+    r.querySelectorAll(".row.hashelp").forEach((row) => row.addEventListener("click", (e) => {
+      if (e.target.closest("input, .help")) return;
+      e.preventDefault();
+      row.classList.toggle("open");
     }));
     this._$("i-model").addEventListener("change", (e) => { this._p.model = e.target.value; this._save(); this._recalc(); });
     this._$("i-eff").addEventListener("change", (e) => { this._p.effMod = e.target.checked; this._save(); this._recalc(); });
