@@ -355,7 +355,7 @@ const WPS_CSS = `
   .grid2:last-child { border-bottom:none; }
   @media (min-width:900px) {
     .grid2 { grid-template-columns:minmax(300px,1fr) minmax(0,1.35fr); }
-    .grid2.r { grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr); }
+    .grid2.r { grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); }
     .grid2 > .sec:first-child { border-right:1px solid var(--divider-color); }
   }
   @media (max-width:899px) { .grid2 > .sec:first-child { border-bottom:1px solid var(--divider-color); } }
@@ -382,7 +382,7 @@ const WPS_CSS = `
   .legend i.dash { border-top-style:dashed; }
   .chartwrap { position:relative; touch-action:pan-y; }
   svg { display:block; width:100%; height:auto; }
-  #diag { max-width:640px; margin:0 auto; }
+  #diag { max-width:1200px; margin:0 auto; }
   .ax text { fill:var(--secondary-text-color); font-size:13px; }
   .ax line { stroke:var(--divider-color); }
   .grid line { stroke:var(--divider-color); stroke-opacity:.55; }
@@ -405,7 +405,7 @@ const WPS_CSS = `
   .buf { fill:var(--card-background-color); stroke:var(--primary-text-color); stroke-width:2; }
   .copbox { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px 10px; font-size:12.5px;
             color:var(--primary-text-color); padding:5px 8px; border:1px solid var(--divider-color); border-radius:8px;
-            max-width:480px; margin:4px auto 0; }
+            max-width:640px; margin:6px auto 0; }
   .frac { display:inline-flex; flex-direction:column; align-items:center; font-size:11.5px; }
   .frac span:first-child { border-bottom:1px solid var(--primary-text-color); padding:0 3px 1px; }
   .frac span:last-child { padding:1px 3px 0; }
@@ -726,7 +726,7 @@ class WpSimulatorCard extends HTMLElement {
       <div class="grid2 r">
       <div class="sec">
         <h3><ha-icon icon="mdi:pipe"></ha-icon>Anlagenschema</h3>
-        <svg id="diag" viewBox="0 0 760 300" role="img" aria-label="Anlagenschema"></svg>
+        <svg id="diag" viewBox="0 14 696 278" role="img" aria-label="Anlagenschema"></svg>
         <div class="copbox">COP =
           <span class="frac"><span>Erzeugte Wärmeleistung</span><span>Eingesetzte elektrische Leistung</span></span> =
           <span class="frac"><span id="cop-q"></span><span id="cop-p"></span></span> = <b id="cop-v"></b></div>
@@ -1018,9 +1018,9 @@ class WpSimulatorCard extends HTMLElement {
       <text class="dlbl" x="154" y="94" text-anchor="middle">TR1: ${wpsFmt(s.tr1, 1)} °C</text>
       <text class="dlbl" x="102" y="284">${wpsFmt(s.evap, 1)} °C</text>
       <rect class="hx" x="78" y="54" width="23" height="198" rx="3" stroke="#42a5f5"/>
-      <text class="dlbl" transform="translate(94 153) rotate(-90)" text-anchor="middle" style="font-size:12px">Verdampfer</text>
+      <text class="dlbl" transform="translate(89.5 153) rotate(-90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Verdampfer</text>
       <rect class="hx" x="206" y="54" width="23" height="198" rx="3" stroke="#ffa726"/>
-      <text class="dlbl" transform="translate(222 153) rotate(90)" text-anchor="middle" style="font-size:12px">Verflüssiger</text>
+      <text class="dlbl" transform="translate(217.5 153) rotate(90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Verflüssiger</text>
 
       ${pipe("M229 62 H382 V96", col(s.TC3), wPrim, s.pc0)}
       ${pipe("M382 236 V244 H229", col(s.TC0), wPrim, s.pc0)}
@@ -1031,7 +1031,7 @@ class WpSimulatorCard extends HTMLElement {
       ${pipe("M404 96 V62 H602 V150", col(s.T0), wHeat, off ? 0 : s.pc1)}
       ${pipe("M602 150 V244 H404 V236", col(s.TR), wHeat, off ? 0 : s.pc1)}
       <rect class="buf" x="370" y="96" width="46" height="140" rx="12"/>
-      <text class="dlbl" transform="translate(397 166) rotate(-90)" text-anchor="middle" style="font-size:12px">Pendelpuffer</text>
+      <text class="dlbl" transform="translate(393 166) rotate(-90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Pendelpuffer</text>
       <text class="dsec" x="505" y="158" text-anchor="middle">Heizkreis</text>
       <text class="dlbl" x="505" y="48" text-anchor="middle">T0: ${wpsFmt(s.T0, 1)} °C | PC1: ${wpsFmt(s.pc1, 0)} l/h</text>
       <text class="dlbl" x="505" y="268" text-anchor="middle">${wpsFmt(s.TR, 1)} °C</text>
