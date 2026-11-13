@@ -942,7 +942,7 @@ class WpSimulatorCard extends HTMLElement {
     g += `</g>
       <text class="axt" x="${M.l + iw / 2}" y="${H - 4}" text-anchor="middle">Außentemperatur (°C)</text>
       <text class="axt" transform="translate(13 ${M.t + ih / 2}) rotate(-90)" text-anchor="middle">Vorlauftemperatur (°C)</text>
-      <text class="axt" transform="translate(${W - 8} ${M.t + ih / 2}) rotate(90)" text-anchor="middle">Leistung (kW) / COP</text>`;
+      <text class="axt" transform="translate(${W - 15} ${M.t + ih / 2}) rotate(90)" text-anchor="middle">Leistung (kW) / COP</text>`;
     g += ln("min", 'stroke-width="2" stroke-dasharray="6 4"', path((d) => x(d.Ta), (d) => yR(d.min)));
     g += ln("cap", 'stroke-width="2.5"', path((d) => x(d.Ta), (d) => yR(d.cap)));
     g += ln("load", 'stroke-width="2.5"', path((d) => x(d.Ta), (d) => yR(d.load)));
