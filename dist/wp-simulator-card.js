@@ -8,7 +8,7 @@
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.7.2";
+const WPS_VERSION = "3.7.4";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -200,9 +200,13 @@ function wpsCompute(p) {
   const modMin = Ta < WPS_C.PC0_SWITCH ? (p.pc0modmin ?? 41) : (p.pc0modwarm ?? 35);
   const fMin = wpsPc0Flow(modMin), fMax = wpsPc0Flow(100);
   const capMinW = wpsCapMin(Ta, T0, model) * 1000;
+  const capMaxW = wpsCapMax(Ta, T0, model) * 1000;
+  /* Über der Maximalleistung deckt der Heizstab (COP 1) den Rest */
+  const qHeater = Math.max(0, Q - capMaxW);
+  const Qwp = Q - qHeater;
   /* Unter der Mindestleistung taktet die WP: sie läuft mit Mindestleistung, Laufzeitanteil = Q / Qmin */
-  const Qrun = Q > 0 ? Math.max(Q, capMinW) : 0;
-  const duty = Q > 0 ? Q / Qrun : 0;
+  const Qrun = Q > 0 ? Math.max(Qwp, capMinW) : 0;
+  const duty = Q > 0 ? Qwp / Qrun : 0;
   const live = Q > 0 && p.pc0Live > 0;
   const mP = Q > 0 ? (live ? p.pc0Live / 3600 : wpsClamp(Qrun / (cp * spread), fMin / 3600, fMax / 3600)) : 0;
   const pc0mod = Q > 0 ? wpsPc0Mod(mP * 3600) : 0;
@@ -216,7 +220,6 @@ function wpsCompute(p) {
   else { TC3 = TR + dTp; TC0 = TR; }
 
   const copBase = wpsCOP(TC3, Ta, model, p.copSlope);
-  const capMaxW = wpsCapMax(Ta, T0, model) * 1000;
   const modCap = wpsClamp(Qrun / Math.max(1e-9, capMaxW), 0, 1);
 
   const prof = WPS_PROFILES[model] || WPS_PROFILES["7 kW"];
@@ -229,7 +232,7 @@ function wpsCompute(p) {
   }
   /* Taktverluste nach EN 14825 (Cd = 0,9) */
   const plf = duty > 0 && duty < 1 ? duty / (WPS_C.CD * duty + 1 - WPS_C.CD) : 1;
-  const pel = Q > 0 ? (pelRun * duty) / plf : 0;
+  const pel = Q > 0 ? (pelRun * duty) / plf + qHeater : 0;
   const cop = Q > 0 ? Q / pel : 0;
   const modEl = pelRun / el[1];
   const Te = Ta - WPS_C.TE;
@@ -246,7 +249,7 @@ function wpsCompute(p) {
    flow150 = gemessener PC1-Durchfluss (794 l/h bei 250 mbar) umgerechnet auf 150 mbar; wird live aus EMS-ESP gelernt. */
 const WPS_DEFAULTS = {
   model: "7 kW", nat: -12, vl20: 22, vlNat: 31, rsoll: 22, offs: -2, minflow: 22, loadKw: 4.1, limB: 13, limit: 13,
-  spread: 4.5, pressure: 250, flow150: 615, pc0modmin: 41, pc0modwarm: 35, copSlope: 0, pc0a: 126, pc0b: 15.9, ti: 22, ta: 5.9, modMode: "electrical", effMod: true,
+  spread: 4.5, pressure: 250, flow150: 615, pc0modmin: 41, pc0modwarm: 35, copSlope: 0, ti: 22, ta: 5.9, modMode: "electrical", effMod: true,
 };
 
 /* Schlüssel, Bezeichnung, min, max, Schritt, Nachkommastellen, Einheit, Gruppe */
@@ -284,7 +287,8 @@ const WPS_ENTITIES = {
   s_pressure: "number.boiler_hpsetdiffpress",
   pumpmod: "sensor.boiler_heatingpumpmod",
   activity: "sensor.boiler_hpactivity",
-  pc0flow: "sensor.wp_primarkreis_durchfluss_berechnet",
+  hppower: "sensor.boiler_hppower",
+  hpcurrpower: "sensor.boiler_hpcurrpower",
   pc1flow: "sensor.boiler_pc1flow",
   target: "sensor.thermostat_hc1_targetflowtemp",
 };
@@ -296,7 +300,7 @@ const WPS_ENT_LABELS = {
   outdoor: "Außentemperatur (gedämpft)", tl2: "Außenlufteintritt TL2", s_nat: "Normaußentemperatur", s_vl20: "Fußpunkt",
   s_vlNat: "Auslegungstemperatur", s_rsoll: "Raumsoll (gewählte Raumtemperatur)", s_offs: "Temperaturanhebung",
   s_minflow: "Min. Vorlauftemperatur", s_limit: "Heizgrenze (Sommertemperatur)", s_spread: "Spreizung TC3/TC0", s_pressure: "Pumpensolldruck PC1",
-  pumpmod: "Modulation PC0 (live)", activity: "Kompressoraktivität", pc0flow: "Durchfluss PC0 (gemessen/berechnet)",
+  pumpmod: "Modulation PC0 (live)", activity: "Kompressoraktivität", hppower: "Heizleistung Kompressor (gemessen)", hpcurrpower: "Elektrische Leistung Kompressor (gemessen)",
   pc1flow: "Durchfluss PC1 (gemessen)", target: "Berechnete Vorlauftemperatur HK1",
 };
 
@@ -628,7 +632,7 @@ class WpSimulatorCard extends HTMLElement {
      Für einen anderen Pumpensolldruck im Rechner wird daraus mit der Wurzel-Regel zurückgerechnet. */
   _autoPc1() {
     const f = this._num("pc1flow"), pr = this._num("s_pressure");
-    if (f === null || f < 50 || pr === null || pr <= 0) return false;
+    if (f === null || f < 50 || pr === null || pr <= 0 || !this._heating()) return false;
     const v = Math.round((f * Math.sqrt(WPS_C.DP_REF / pr)) / 5) * 5;
     if (this._p.flow150 === v) return false;
     this._p.flow150 = v;
@@ -641,8 +645,8 @@ class WpSimulatorCard extends HTMLElement {
     if (!this._pc0Auto || !this._heating()) return null;
     const out = this._num("outdoor");
     if (out === null || Math.abs(out - this._p.ta) > 0.5) return null;
-    const v = this._num("pc0flow");
-    return v !== null && v > 0 ? v : null;
+    const m = this._num("pumpmod");
+    return m !== null && m > 0 ? wpsPc0Flow(m) : null;
   }
 
   _loadFromEms() {
@@ -737,6 +741,7 @@ class WpSimulatorCard extends HTMLElement {
         <div class="kv">
           <span>Wärmeleistung</span><span id="k-q"></span>
           <span>Elektrische Leistung</span><span id="k-p"></span>
+          <span>Gemessen (EMS-ESP)</span><span id="k-meas"></span>
           <span>Strom pro Tag (24 h)</span><span id="k-day"></span>
           <span>Verdichter (Anteil an Max.-Leistung)</span><span id="k-mod"></span>
           <span>Vorlauf eingestellt / benötigt</span><span id="k-vl"></span>
@@ -758,7 +763,7 @@ class WpSimulatorCard extends HTMLElement {
           „Raumtemperatur (real gewünscht)“ gilt nur für die Wärmeabgabe der Fußbodenheizung; sie wird so gerechnet, dass der Vorlauf der Anlage bei NAT genau die Heizlast deckt.
           Die Außentemperatur folgt der gedämpften Außentemperatur aus EMS-ESP; verschiebst du den Regler, bleibt dein Wert bis „Aus EMS-ESP laden“.
           PC0-Mindestmodulation: Die Simulation nimmt den Regler, der zur eingestellten Außentemperatur passt (fett, der andere ist ausgegraut). Den Live-Wert aus EMS-ESP übernimmt die Karte im Heizbetrieb in den Regler, der zur echten Lufttemperatur TL2 passt (unter 4 °C bzw. ab 5 °C; dazwischen schaltet die WP um, dort wird nichts übernommen).
-          PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur der Wert aus „WP Primärkreis Durchfluss berechnet“, sonst dieselbe Formel wie im Helfer (unter 50 %: 610 + 6,2 l/h je %, ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %)). Ändert sich die Formel im Helfer, muss sie in der Karte (WPS_PC0_A/WPS_PC0_B) mitgezogen werden.
+          PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur aus der Live-Modulation der Pumpe, sonst aus dem Regler; Formel (unter 50 %: 610 + 6,2 l/h je %, ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %)).
           Ein Bestwert zählt nur, wenn die Heizlast zu mindestens 98 % gedeckt ist. „Als Standard speichern“ merkt sich die Reglerstellung in diesem Browser.
           Kennwerte laut Buderus-Planungsunterlage 2024/04. Das Profil 7 kW (WLW-7 MB AR) ist an einer Anlage geprüft, die anderen Größen sind aus den Datenblattwerten abgeleitet (Pumpenkennlinie PC0 und Verluste gelten für die 7-kW-Anlage). Unter der Mindestleistung taktet die WP; Taktverluste nach EN 14825 sind eingerechnet.</details>
         <div class="credit">Dieser Rechner basiert auf dem Simulator von <a href="https://bosch-buderus-wp.github.io/" target="_blank" rel="noopener noreferrer">Matthias Röckl (bosch-buderus-wp.github.io)</a> und wurde für diese Karte angepasst: eingebunden in Home Assistant mit Live-Werten aus EMS-ESP und um die Wärmeabgabe der Fußbodenheizung sowie das Takten unter der Mindestleistung erweitert.</div>
@@ -1055,6 +1060,9 @@ class WpSimulatorCard extends HTMLElement {
     } else { this._txt(dEl, ""); dEl.className = "delta"; }
     this._txt(this._$("k-q"), `${wpsFmt(s.Q / 1000, 2)} kW`);
     this._txt(this._$("k-p"), `${wpsFmt(s.pel / 1000, 2)} kW`);
+    const hq = this._num("hppower"), he = this._num("hpcurrpower");
+    this._txt(this._$("k-meas"), hq !== null && he !== null && he > 0 && hq > 0
+      ? `${wpsFmt(hq, 1)} kW Wärme / ${wpsFmt(he, 0)} W el. (COP ≈ ${wpsFmt((hq * 1000) / he, 1)})` : "–");
     const dayNow = (s.pel * 24) / 1000, dayPlant = (a.pel * 24) / 1000;
     this._txt(this._$("k-day"), off ? "–" : `${wpsFmt(dayNow, 1)} kWh` +
       (a.Q > 0 && Math.abs(dayNow - dayPlant) > 0.05 ? ` (Anlage ${wpsFmt(dayPlant, 1)})` : ""));
@@ -1095,7 +1103,7 @@ class WpSimulatorCard extends HTMLElement {
 
     const w = this._$("warn");
     let msg = "";
-    if (!off && s.Q > s.capMaxW) msg = `Heizlast über der max. WP-Leistung (${wpsFmt(s.capMaxW / 1000, 2)} kW) – Heizstab nötig.`;
+    if (!off && s.Q > s.capMaxW) msg = `Heizlast über der max. WP-Leistung (${wpsFmt(s.capMaxW / 1000, 2)} kW) – der Heizstab deckt den Rest (in Strom und COP eingerechnet).`;
     else if (!off && s.Q < s.capMinW) msg = `Heizlast unter der min. WP-Leistung (${wpsFmt(s.capMinW / 1000, 2)} kW) – die WP taktet (Laufzeit ca. ${wpsFmt(s.duty * 100, 0)} %, Taktverluste eingerechnet).`;
     this._txt(w, msg);
     w.classList.toggle("show", !!msg);
