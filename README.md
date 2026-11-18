@@ -38,6 +38,18 @@ defaults:
   ti: 21        # gewünschte Raumtemperatur
 ```
 
+**Heizkörper oder gemischte Anlage:** Standard ist Fußbodenheizung. Mit `emitter` stellst du die Wärmeabgabe der Heizflächen ein (sie bestimmt, wie hoch der Vorlauf für die Heizlast sein muss und ob die Heizlast gedeckt ist):
+
+```yaml
+type: custom:wp-simulator-card
+emitter: radiator   # floor (Standard, Exponent 1,1) | mixed (1,2) | radiator (1,3)
+# emitter_exponent: 1.25   # optional: eigener Exponent statt emitter
+defaults:
+  spread: 7         # Heizkörper laufen meist mit größerer Spreizung (K)
+```
+
+Bei hohen Vorlauftemperaturen zusätzlich den Regler „Zusätzlicher COP-Abfall über 35 °C“ nutzen (siehe unten). Die COP-Berechnung selbst hängt nur vom Vorlauf ab, nicht von der Art der Heizflächen.
+
 Die Einstellungen der Wärmepumpe (Fußpunkt, Auslegungstemperatur, Raumsoll, Spreizung, Pumpendruck usw.) holt die Schaltfläche **Aus EMS-ESP laden** direkt aus der Anlage. Ebenso übernimmt die Karte die gedämpfte Außentemperatur live.
 
 ## Voraussetzungen

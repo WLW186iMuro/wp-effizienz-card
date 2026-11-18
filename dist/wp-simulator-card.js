@@ -2,13 +2,15 @@
  * Inneneinheit WLW186i-12 TP70. Kennwerte aus der Buderus-Planungsunterlage 2024/04; nur das 7-kW-Profil ist an einer Anlage kalibriert.
  * Regler verschieben, Anlagenschema und COP rechnen live mit. Der Rechenkern ist ein Port des Simulators von
  * Matthias Röckl (https://bosch-buderus-wp.github.io/, MIT-Lizenz, Copyright (c) 2026 Matthias Röckl; siehe NOTICE.md),
- * ergänzt um die Wärmeabgabe der Fußbodenheizung (Deckung der Heizlast) und das Takten unter der Mindestleistung.
+ * ergänzt um die Wärmeabgabe der Heizflächen (Fußbodenheizung, Heizkörper oder gemischt; Deckung der Heizlast) und das Takten unter der Mindestleistung.
  * Nutzung:   type: custom:wp-simulator-card
  * Optional:  title, storage_key, defaults: { ... }, entities: { ... }, controls: { <regler>: { min, max, step } },
  *            shift: { room: 1.5, offset: 1.3, ref: 21 }   (Parallelverschiebung der Heizkurve in K Vorlauf je K)
+ *            emitter: floor | mixed | radiator   (Heizflächen: Fußbodenheizung = Standard, gemischt, Heizkörper)
+ *            emitter_exponent: 1.1   (statt emitter: Wärmeabgabe-Exponent selbst setzen, FBH 1.1, Heizkörper ca. 1.3)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.7.5";
+const WPS_VERSION = "3.8.0";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -50,7 +52,7 @@ const WPS_PROFILES = {
 /* Parallelverschiebung der Heizkurve (an der Anlage gemessen, per Karten-Konfiguration shift: {...} anpassbar):
    RSHIFT = K Vorlauf je K Raumsoll, OSHIFT = K Vorlauf je K Temperaturanhebung, RREF = Bezugs-Raumsoll
    SPLIT = Heizgrenze Gebäude (Heizlastlinie) und Heizgrenze WP (Heizbetrieb aus) getrennt; false = altes Verhalten */
-const WPS_C = { cp: 4180, CD: 0.9, TE: 7, TC: 4, SH: 10, OVERHEAD: 1.03, DP_REF: 150, LIFT_REF: 47.6, RSHIFT: 1.5, OSHIFT: 1.3, RREF: 21, PC0_SWITCH: 5, PC0_LEARN_LO: 4, PC0_LEARN_HI: 5, SPLIT: true };
+const WPS_C = { cp: 4180, CD: 0.9, TE: 7, TC: 4, SH: 10, OVERHEAD: 1.03, DP_REF: 150, LIFT_REF: 47.6, RSHIFT: 1.5, OSHIFT: 1.3, RREF: 21, PC0_SWITCH: 5, PC0_LEARN_LO: 4, PC0_LEARN_HI: 5, SPLIT: true, EMIT_N: 1.1 };
 
 const wpsClamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const wpsK = (c) => c + 273.15;
@@ -315,7 +317,8 @@ const WPS_SERIES = [
   ["cap", "Max. WP", false], ["min", "Min. WP", true], ["cop", "COP", false],
 ];
 const WPS_CW = 680, WPS_CH = 300, WPS_M = { t: 10, r: 44, b: 38, l: 42 };
-const WPS_FBH_N = 1.1; /* Heizkörperexponent Fußbodenheizung */
+/* Wärmeabgabe-Exponent der Heizflächen: Fußbodenheizung 1,1, gemischt 1,2, Heizkörper 1,3 (Karten-Konfiguration emitter / emitter_exponent) */
+const WPS_EMITTERS = { floor: 1.1, mixed: 1.2, radiator: 1.3 };
 
 const wpsFmt = (v, d = 1) =>
   v === null || v === undefined || isNaN(v) ? "–" :
@@ -328,7 +331,7 @@ function wpsTempColor(t) {
 }
 
 /* Wärmeabgabe der Fußbodenheizung: Bezugspunkt = Vorlauf der Anlage bei NAT deckt genau die Heizlast.
-   Ist der Heizbetrieb der WP aus (über ihrer Heizgrenze), gibt die Fußbodenheizung nichts ab. */
+   Ist der Heizbetrieb der WP aus (über ihrer Heizgrenze), geben die Heizflächen nichts ab. */
 function wpsFbh(p, ref, Ta) {
   const cp = WPS_C.cp;
   const mHref = (ref.flow150 / 3600) * Math.sqrt(Math.max(20, ref.pressure) / WPS_C.DP_REF);
@@ -340,8 +343,8 @@ function wpsFbh(p, ref, Ta) {
   const mH = (p.flow150 / 3600) * Math.sqrt(Math.max(20, p.pressure) / WPS_C.DP_REF);
   const T0 = wpsFlowTarget(Ta, p);
   const Tm = T0 - Q / (2 * mH * cp);
-  const emit = on ? Qd * Math.pow(Math.max(0, Tm - p.ti) / dD, WPS_FBH_N) : 0;
-  const TmReq = p.ti + dD * Math.pow(Math.max(0, Q) / Qd, 1 / WPS_FBH_N);
+  const emit = on ? Qd * Math.pow(Math.max(0, Tm - p.ti) / dD, WPS_C.EMIT_N) : 0;
+  const TmReq = p.ti + dD * Math.pow(Math.max(0, Q) / Qd, 1 / WPS_C.EMIT_N);
   const T0req = Q > 0 ? TmReq + Q / (2 * mH * cp) : null;
   return { Q, emit, on, cov: Q > 0 ? emit / Q : null, T0req, Tm };
 }
@@ -469,6 +472,11 @@ class WpSimulatorCard extends HTMLElement {
     if (sh.ref !== undefined) WPS_C.RREF = +sh.ref;
     /* heizgrenze: legacy -> altes Verhalten (eine Heizgrenze für Gebäude und WP, Regler „Heizgrenze Gebäude“ entfällt) */
     WPS_C.SPLIT = String(this._config.heizgrenze || "").toLowerCase() !== "legacy";
+    /* Heizflächen: Exponent der Wärmeabgabe (Fußbodenheizung 1,1 / gemischt 1,2 / Heizkörper 1,3), alternativ eigener Wert */
+    const em = String(this._config.emitter || "floor").toLowerCase();
+    const emN = WPS_EMITTERS[em] ?? (/heiz|rad/.test(em) ? WPS_EMITTERS.radiator : /misch|mix/.test(em) ? WPS_EMITTERS.mixed : WPS_EMITTERS.floor);
+    const emCustom = parseFloat(this._config.emitter_exponent);
+    WPS_C.EMIT_N = emCustom > 0.5 && emCustom < 2.5 ? emCustom : emN;
     this._ent = Object.assign({}, WPS_ENTITIES, this._config.entities || {});
     /* Regler: eingebaut, optional überschrieben durch controls: { key: { min, max, step } } */
     const ov = this._config.controls || {};
@@ -577,7 +585,7 @@ class WpSimulatorCard extends HTMLElement {
     this["_ft" + id] = setTimeout(() => { span.textContent = old; b.classList.remove("on"); }, 1800);
   }
 
-  /* Anlagenwerte (EMS-ESP) – Bezugspunkt für die Fußbodenheizung und Markierung geänderter Regler */
+  /* Anlagenwerte (EMS-ESP) – Bezugspunkt für die Heizflächen und Markierung geänderter Regler */
   _plant() {
     const o = {};
     for (const [k, ek] of Object.entries(WPS_SYNC)) o[k] = this._num(ek);
@@ -764,7 +772,7 @@ class WpSimulatorCard extends HTMLElement {
           ${limNote}
           PC1-Durchfluss: gemessen von EMS-ESP beim Pumpensolldruck der Anlage (wird laufend übernommen, solange PC1 läuft). Stellst du im Rechner einen anderen Pumpensolldruck ein, wird der Durchfluss mit der Wurzel-Regel umgerechnet (Durchfluss ~ √Druck).
           Heizkurve: Gerade durch Fußpunkt und Auslegung, parallel verschoben durch Raumsoll und Temperaturanhebung (an deiner Anlage gemessen), nach unten begrenzt durch die Min. Vorlauftemperatur. EMS-ESP meldet den Vorlauf-Soll nur in ganzen Grad.
-          „Raumtemperatur (real gewünscht)“ gilt nur für die Wärmeabgabe der Fußbodenheizung; sie wird so gerechnet, dass der Vorlauf der Anlage bei NAT genau die Heizlast deckt.
+          „Raumtemperatur (real gewünscht)“ gilt nur für die Wärmeabgabe der Heizflächen; sie wird so gerechnet, dass der Vorlauf der Anlage bei NAT genau die Heizlast deckt. Heizflächen: Standard ist Fußbodenheizung; für Heizkörper oder gemischte Anlagen in der Kartenkonfiguration <i>emitter: radiator</i> bzw. <i>emitter: mixed</i> eintragen (Exponent der Wärmeabgabe 1,3 bzw. 1,2 statt 1,1).
           Die Außentemperatur folgt der gedämpften Außentemperatur aus EMS-ESP; verschiebst du den Regler, bleibt dein Wert bis „Aus EMS-ESP laden“.
           PC0-Mindestmodulation: Die Simulation nimmt den Regler, der zur eingestellten Außentemperatur passt (fett, der andere ist ausgegraut). Den Live-Wert aus EMS-ESP übernimmt die Karte im Heizbetrieb in den Regler, der zur echten Lufttemperatur TL2 passt (unter 4 °C bzw. ab 5 °C; dazwischen schaltet die WP um, dort wird nichts übernommen).
           PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur aus der Live-Modulation der Pumpe, sonst aus dem Regler; Formel (unter 41 %: 21,1 l/h je %, vorläufig aus der Wärmebilanz; 41–50 %: 610 + 6,2 × %; ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %)).
@@ -1100,8 +1108,8 @@ class WpSimulatorCard extends HTMLElement {
       const c = f.cov * 100;
       bar.style.width = `${wpsClamp(c / 1.3, 0, 100)}%`;
       bar.style.background = c < 98 ? "var(--error-color, #e53935)" : c > 110 ? "var(--warning-color, #ffa726)" : "var(--success-color, #43a047)";
-      this._txt(ct, c < 98 ? `Fußbodenheizung deckt nur ${wpsFmt(c, 0)} % der Heizlast – Räume erreichen ${wpsFmt(p.ti, 1)} °C nicht.`
-        : c > 110 ? `Fußbodenheizung liefert ${wpsFmt(c, 0)} % der Heizlast – Vorlauf höher als nötig, Räume werden wärmer.`
+      this._txt(ct, c < 98 ? `Die Heizflächen decken nur ${wpsFmt(c, 0)} % der Heizlast – Räume erreichen ${wpsFmt(p.ti, 1)} °C nicht.`
+        : c > 110 ? `Die Heizflächen liefern ${wpsFmt(c, 0)} % der Heizlast – Vorlauf höher als nötig, Räume werden wärmer.`
         : `Heizlast gedeckt (${wpsFmt(c, 0)} %).`);
     }
 
