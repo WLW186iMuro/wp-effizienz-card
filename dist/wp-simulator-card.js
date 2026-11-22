@@ -10,7 +10,7 @@
  *            emitter_exponent: 1.1   (statt emitter: Wärmeabgabe-Exponent selbst setzen, FBH 1.1, Heizkörper ca. 1.3)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.8.0";
+const WPS_VERSION = "3.8.1";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -173,23 +173,21 @@ function wpsModCalib(Ta, model) {
 }
 
 /* PC0-Durchfluss (Heizen) aus der Pumpenmodulation – identisch mit dem Helfer „WP Primärkreis Durchfluss berechnet“
-   (Stand 17.11.2026): unter 41 %: 21,08 × % (proportional; vorläufig aus der Wärmebilanz PC1 × (VL−RL)/(TC3−TC0)
-   bei 25–36 % ermittelt, ±15 %, stetig an 865 l/h bei 41 %), 41–50 %: 610 + 6,2 × % (Gerade durch ca. 865 l/h bei 41 %
-   und 921 l/h bei 50 %), ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %).
-   Frühere Fassungen: 747 + 3,5 × %, dann 722 + 3,5 × %, dann 610 + 6,2 × % bis 50 % (unter 41 % zu hoch, bei 25 % um fast 50 %). */
-const WPS_PC0_A = 610, WPS_PC0_B = 6.2, WPS_PC0_LOW_MOD = 41, WPS_PC0_LOW_K = (WPS_PC0_A + WPS_PC0_B * WPS_PC0_LOW_MOD) / WPS_PC0_LOW_MOD;
+   (Stand 22.11.2026): eine Kennlinie für den ganzen Heizbereich, max(126 + 15,9 × %, −486 + 23,9 × %), Knick bei ca. 77 %.
+   Bestätigt durch pc0flow-Messwerte im Heizbetrieb 46–80 % (96 + 16,6 × %, ±19 l/h) und die Wärmebilanz hppower/(TC1−TC0),
+   am Sensor kalibriert: 41 % ca. 770 l/h, 35 % ca. 650 l/h (Gerade 778 / 682). Gilt unabhängig von der Außentemperatur;
+   die Außentemperatur bestimmt nur die Mindestmodulation (Regler pc0modmin / pc0modwarm).
+   Frühere Fassungen: 747 + 3,5 × %, 722 + 3,5 × %, 610 + 6,2 × % bis 50 %, zuletzt zusätzlich 21,08 × % unter 41 %
+   (bei 41 % ca. 11 % zu hoch). */
 function wpsPc0Flow(mod) {
   if (!(mod > 0)) return 0;
-  if (mod < WPS_PC0_LOW_MOD) return WPS_PC0_LOW_K * mod;
-  return mod < 50 ? WPS_PC0_A + WPS_PC0_B * mod : Math.max(126 + 15.9 * mod, -486 + 23.9 * mod);
+  return Math.max(126 + 15.9 * mod, -486 + 23.9 * mod);
 }
 /* Umkehrung: Modulation zu einem Durchfluss (l/h) */
 function wpsPc0Mod(flow) {
   if (!(flow > 0)) return 0;
-  if (flow < wpsPc0Flow(WPS_PC0_LOW_MOD)) return wpsClamp(flow / WPS_PC0_LOW_K, 0, WPS_PC0_LOW_MOD);
-  if (flow < wpsPc0Flow(50)) return wpsClamp((flow - WPS_PC0_A) / WPS_PC0_B, WPS_PC0_LOW_MOD, 50);
   const a = (flow - 126) / 15.9, b = (flow + 486) / 23.9;
-  return Math.min(a, b);
+  return wpsClamp(Math.min(a, b), 0, 100);
 }
 
 /* Gesamtzustand für eine Außentemperatur. p.pc0Live (l/h) ersetzt den gerechneten PC0-Durchfluss.
@@ -775,7 +773,7 @@ class WpSimulatorCard extends HTMLElement {
           „Raumtemperatur (real gewünscht)“ gilt nur für die Wärmeabgabe der Heizflächen; sie wird so gerechnet, dass der Vorlauf der Anlage bei NAT genau die Heizlast deckt. Heizflächen: Standard ist Fußbodenheizung; für Heizkörper oder gemischte Anlagen in der Kartenkonfiguration <i>emitter: radiator</i> bzw. <i>emitter: mixed</i> eintragen (Exponent der Wärmeabgabe 1,3 bzw. 1,2 statt 1,1).
           Die Außentemperatur folgt der gedämpften Außentemperatur aus EMS-ESP; verschiebst du den Regler, bleibt dein Wert bis „Aus EMS-ESP laden“.
           PC0-Mindestmodulation: Die Simulation nimmt den Regler, der zur eingestellten Außentemperatur passt (fett, der andere ist ausgegraut). Den Live-Wert aus EMS-ESP übernimmt die Karte im Heizbetrieb in den Regler, der zur echten Lufttemperatur TL2 passt (unter 4 °C bzw. ab 5 °C; dazwischen schaltet die WP um, dort wird nichts übernommen).
-          PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur aus der Live-Modulation der Pumpe, sonst aus dem Regler; Formel (unter 41 %: 21,1 l/h je %, vorläufig aus der Wärmebilanz; 41–50 %: 610 + 6,2 × %; ab 50 %: max(126 + 15,9 × %, −486 + 23,9 × %)).
+          PC0-Durchfluss: im Heizbetrieb bei aktueller Außentemperatur aus der Live-Modulation der Pumpe, sonst aus dem Regler; Formel für den ganzen Heizbereich: max(126 + 15,9 × %, −486 + 23,9 × %), z. B. 682 l/h bei 35 %, 778 l/h bei 41 %, 921 l/h bei 50 % (Stand 22.11.2026).
           Ein Bestwert zählt nur, wenn die Heizlast zu mindestens 98 % gedeckt ist. „Als Standard speichern“ merkt sich die Reglerstellung in diesem Browser.
           Kennwerte laut Buderus-Planungsunterlage 2024/04. Das Profil 7 kW (WLW-7 MB AR) ist an einer Anlage geprüft, die anderen Größen sind aus den Datenblattwerten abgeleitet (Pumpenkennlinie PC0 und Verluste gelten für die 7-kW-Anlage). Unter der Mindestleistung taktet die WP; Taktverluste nach EN 14825 sind eingerechnet.</details>
         <div class="credit">Dieser Rechner basiert auf dem Simulator von <a href="https://bosch-buderus-wp.github.io/" target="_blank" rel="noopener noreferrer">Matthias Röckl (bosch-buderus-wp.github.io)</a> und wurde für diese Karte angepasst: eingebunden in Home Assistant mit Live-Werten aus EMS-ESP und um die Wärmeabgabe der Fußbodenheizung sowie das Takten unter der Mindestleistung erweitert.</div>
