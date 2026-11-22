@@ -367,6 +367,20 @@ const WPS_CSS = `
     .grid2.r { grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr); }
     .grid2 > .sec:first-child { border-right:1px solid var(--divider-color); }
   }
+  /* Große Bildschirme: alles auf einer Seite – links Regler, Mitte Diagramm und Schema, rechts Effizienz */
+  @media (min-width:1300px) {
+    .layout { display:grid; grid-template-columns:minmax(280px,.8fr) minmax(0,1.7fr) minmax(300px,.9fr); }
+    .grid2, .grid2.r { display:contents; }
+    .layout .sec { border:0; padding:6px 12px; }
+    .layout .sa { grid-column:1; grid-row:1 / span 2; border-right:1px solid var(--divider-color); }
+    .layout .sb { grid-column:2; grid-row:1; border-bottom:1px solid var(--divider-color); }
+    .layout .sc { grid-column:2; grid-row:2; }
+    .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
+    /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
+    #chart { max-width:calc(30vh * 2.2667); margin:0 auto; }
+    #diag { max-width:calc(27vh * 2.5036); }
+    .row { min-height:22px; }
+  }
   @media (max-width:899px) { .grid2 > .sec:first-child { border-bottom:1px solid var(--divider-color); } }
   .sec { padding:8px 12px; min-width:0; }
   .sec h3 { margin:0 0 4px; font-size:12.5px; font-weight:600; color:var(--secondary-text-color); display:flex; align-items:center; gap:6px; }
@@ -721,15 +735,15 @@ class WpSimulatorCard extends HTMLElement {
           <button class="btn" id="b-setstd" title="Aktuelle Reglerstellung als neue Standardwerte speichern"><ha-icon icon="mdi:content-save-outline"></ha-icon><span>Als Standard speichern</span></button>
         </div>
       </div>
-      <div class="grid2">
-      <div class="sec">
+      <div class="layout"><div class="grid2">
+      <div class="sec sa">
         ${rows}
         <div class="adv">
           <label class="mdl">Außeneinheit <select id="i-model">${Object.keys(WPS_PROFILES).sort((a, b) => parseFloat(a) - parseFloat(b)).map((m) => `<option value="${m}"${m === p.model ? " selected" : ""}>${m}${m === "7 kW" ? "" : " (Datenblatt)"}</option>`).join("")}</select></label>
           <label><input type="checkbox" id="i-eff" ${p.effMod ? "checked" : ""}> Effizienz abhängig von Modulation</label>
         </div>
       </div>
-      <div class="sec">
+      <div class="sec sb">
         <h3><ha-icon icon="mdi:chart-bell-curve-cumulative"></ha-icon>Heizkurve, Heizlast &amp; COP
           <button class="btn" id="b-tip"><ha-icon icon="mdi:format-list-bulleted"></ha-icon><span>Werte</span></button></h3>
         <div class="legend">${legend}</div>
@@ -738,14 +752,14 @@ class WpSimulatorCard extends HTMLElement {
       </div>
       </div>
       <div class="grid2 r">
-      <div class="sec">
+      <div class="sec sc">
         <h3><ha-icon icon="mdi:pipe"></ha-icon>Anlagenschema</h3>
         <svg id="diag" viewBox="0 14 696 278" role="img" aria-label="Anlagenschema"></svg>
         <div class="copbox">COP =
           <span class="frac"><span>Erzeugte Wärmeleistung</span><span>Eingesetzte elektrische Leistung</span></span> =
           <span class="frac"><span id="cop-q"></span><span id="cop-p"></span></span> = <b id="cop-v"></b></div>
       </div>
-      <div class="sec">
+      <div class="sec sd">
         <h3><ha-icon icon="mdi:speedometer"></ha-icon>Effizienz</h3>
         <div class="kpi"><span class="big" id="k-cop">–</span><span class="lbl">COP</span><span class="delta" id="k-delta"></span></div>
         <div class="kv">
@@ -777,6 +791,7 @@ class WpSimulatorCard extends HTMLElement {
           Ein Bestwert zählt nur, wenn die Heizlast zu mindestens 98 % gedeckt ist. „Als Standard speichern“ merkt sich die Reglerstellung in diesem Browser.
           Kennwerte laut Buderus-Planungsunterlage 2024/04. Das Profil 7 kW (WLW-7 MB AR) ist an einer Anlage geprüft, die anderen Größen sind aus den Datenblattwerten abgeleitet (Pumpenkennlinie PC0 und Verluste gelten für die 7-kW-Anlage). Unter der Mindestleistung taktet die WP; Taktverluste nach EN 14825 sind eingerechnet.</details>
         <div class="credit">Dieser Rechner basiert auf dem Simulator von <a href="https://bosch-buderus-wp.github.io/" target="_blank" rel="noopener noreferrer">Matthias Röckl (bosch-buderus-wp.github.io)</a> und wurde für diese Karte angepasst: eingebunden in Home Assistant mit Live-Werten aus EMS-ESP und um die Wärmeabgabe der Fußbodenheizung sowie das Takten unter der Mindestleistung erweitert.</div>
+      </div>
       </div>
       </div>
     </ha-card>`;
@@ -1040,7 +1055,8 @@ class WpSimulatorCard extends HTMLElement {
       ${pipe("M229 62 H382 V96", col(s.TC3), wPrim, s.pc0)}
       ${pipe("M382 236 V244 H229", col(s.TC0), wPrim, s.pc0)}
       <text class="dsec" x="306" y="158" text-anchor="middle">Primärkreis</text>
-      <text class="dlbl" x="306" y="48" text-anchor="middle">TC3: ${wpsFmt(s.TC3, 1)} °C | PC0: ${wpsFmt(s.pc0, 0)} l/h (${wpsFmt(s.pc0mod, 0)} %)${s.pc0live ? " · EMS-ESP" : ""}</text>
+      <text class="dlbl" x="306" y="32" text-anchor="middle">TC3: ${wpsFmt(s.TC3, 1)} °C</text>
+      <text class="dlbl" x="306" y="48" text-anchor="middle">PC0: ${wpsFmt(s.pc0, 0)} l/h (${wpsFmt(s.pc0mod, 0)} %)${s.pc0live ? " · live" : ""}</text>
       <text class="dlbl" x="306" y="268" text-anchor="middle">TC0: ${wpsFmt(s.TC0, 1)} °C</text>
 
       ${pipe("M404 96 V62 H602 V150", col(s.T0), wHeat, off ? 0 : s.pc1)}
