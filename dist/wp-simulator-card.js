@@ -369,7 +369,7 @@ const WPS_CSS = `
   }
   /* Große Bildschirme: alles auf einer Seite – links Regler, Mitte Diagramm und Schema, rechts Effizienz */
   @media (min-width:1300px) {
-    .layout { display:grid; grid-template-columns:minmax(360px,.8fr) minmax(0,1.9fr) minmax(340px,.9fr); }
+    .layout { display:grid; grid-template-columns:minmax(400px,.9fr) minmax(0,1.75fr) minmax(340px,.9fr); }
     .grid2, .grid2.r { display:contents; }
     .layout .sec { border:0; padding:4px 12px; }
     .layout .sa { grid-column:1; grid-row:1 / span 2; border-right:1px solid var(--divider-color); }
@@ -378,7 +378,7 @@ const WPS_CSS = `
     .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
     #chart { max-width:calc(36vh * 2.7667); margin:0 auto; }
-    .layout #diag { max-width:calc(28.8vh * 2.5036); }
+    .layout #diag { max-width:calc(28.8vh * 3.482); }
     #chart path[stroke-width="2.5"] { stroke-width:3.2px; }
     #chart .ax text, #chart .axt { font-size:14.5px; }
     .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
@@ -1040,6 +1040,8 @@ class WpSimulatorCard extends HTMLElement {
       `<path class="pipe" d="${path}" stroke="${c}" stroke-width="${w}" style="--dur:${dur(lph)}s${lph > 1 ? "" : ";animation:none"}"/>`;
     const off = s.Q <= 0, ref = off ? 0 : 300;
     const tMean = (s.T0 + s.TR) / 2;
+    const K = window.innerWidth >= 1300 ? 1.6 : 1, X = (x) => (x <= 242 ? x : 242 + (x - 242) * K), d = X(393) - 393;
+    this._$("diag").setAttribute("viewBox", `0 14 ${X(696)} 278`);
     this._$("diag").innerHTML = `
       <path class="air" d="M6 70 H62"/><path class="air" d="M6 230 H62"/>
       <text class="dlbl b" x="30" y="155" text-anchor="middle">${wpsFmt(s.Ta, 1)} °C</text>
@@ -1052,8 +1054,8 @@ class WpSimulatorCard extends HTMLElement {
       <circle class="sym" cx="154" cy="62" r="13" stroke="#ef6c00"/>
       <path d="M146 62 q4 -8 8 0 t8 0" fill="none" stroke="#ef6c00" stroke-width="1.6"/>
       <path class="sym" d="M142 237 L154 244 L142 251 Z M166 237 L154 244 L166 251 Z" stroke="#7e57c2"/>
-      <circle class="sym" cx="330" cy="62" r="9" stroke="var(--secondary-text-color)"/><path class="symf" d="M326 57.5 L335 62 L326 66.5 Z" fill="var(--secondary-text-color)"/>
-      <circle class="sym" cx="500" cy="62" r="9" stroke="var(--secondary-text-color)"/><path class="symf" d="M496 57.5 L505 62 L496 66.5 Z" fill="var(--secondary-text-color)"/>
+      <g transform="translate(${X(330) - 330} 0)"><circle class="sym" cx="330" cy="62" r="9" stroke="var(--secondary-text-color)"/><path class="symf" d="M326 57.5 L335 62 L326 66.5 Z" fill="var(--secondary-text-color)"/></g>
+      <g transform="translate(${X(500) - 500} 0)"><circle class="sym" cx="500" cy="62" r="9" stroke="var(--secondary-text-color)"/><path class="symf" d="M496 57.5 L505 62 L496 66.5 Z" fill="var(--secondary-text-color)"/></g>
       <text class="dlbl" x="102" y="52">${wpsFmt(s.suction, 1)} °C</text>
       <text class="dlbl" x="154" y="94" text-anchor="middle">TR1: ${wpsFmt(s.tr1, 1)} °C</text>
       <text class="dlbl" x="102" y="284">${wpsFmt(s.evap, 1)} °C</text>
@@ -1062,22 +1064,22 @@ class WpSimulatorCard extends HTMLElement {
       <rect class="hx" x="206" y="54" width="23" height="198" rx="3" stroke="#ffa726"/>
       <text class="dlbl" transform="translate(217.5 153) rotate(90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Verflüssiger</text>
 
-      ${pipe("M229 62 H382 V82", col(s.TC3), wPrim, s.pc0)}
-      ${pipe("M382 224 V244 H229", col(s.TC0), wPrim, s.pc0)}
-      <text class="dsec" x="306" y="158" text-anchor="middle">Primärkreis</text>
-      <text class="dlbl" x="306" y="32" text-anchor="middle">TC3: ${wpsFmt(s.TC3, 1)} °C</text>
-      <text class="dlbl" x="306" y="48" text-anchor="middle">PC0: ${wpsFmt(s.pc0, 0)} l/h (${wpsFmt(s.pc0mod, 0)} %)${s.pc0live ? " · live" : ""}</text>
-      <text class="dlbl" x="306" y="268" text-anchor="middle">TC0: ${wpsFmt(s.TC0, 1)} °C</text>
+      ${pipe(`M229 62 H${382 + d} V82`, col(s.TC3), wPrim, s.pc0)}
+      ${pipe(`M${382 + d} 224 V244 H229`, col(s.TC0), wPrim, s.pc0)}
+      <text class="dsec" x="${X(306)}" y="158" text-anchor="middle">Primärkreis</text>
+      <text class="dlbl" x="${X(306)}" y="32" text-anchor="middle">TC3: ${wpsFmt(s.TC3, 1)} °C</text>
+      <text class="dlbl" x="${X(306)}" y="48" text-anchor="middle">PC0: ${wpsFmt(s.pc0, 0)} l/h (${wpsFmt(s.pc0mod, 0)} %)${s.pc0live ? " · live" : ""}</text>
+      <text class="dlbl" x="${X(306)}" y="268" text-anchor="middle">TC0: ${wpsFmt(s.TC0, 1)} °C</text>
 
-      ${pipe("M404 82 V62 H602 V150", col(s.T0), wHeat, off ? 0 : s.pc1)}
-      ${pipe("M602 150 V244 H404 V224", col(s.TR), wHeat, off ? 0 : s.pc1)}
-      <rect class="buf" x="370" y="82" width="46" height="142" rx="12"/>
-      <text class="dlbl" transform="translate(393 153) rotate(-90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Pendelpuffer</text>
-      <text class="dsec" x="505" y="158" text-anchor="middle">Heizkreis</text>
-      <text class="dlbl" x="505" y="48" text-anchor="middle">T0: ${wpsFmt(s.T0, 1)} °C | PC1: ${wpsFmt(s.pc1, 0)} l/h</text>
-      <text class="dlbl" x="505" y="268" text-anchor="middle">${wpsFmt(s.TR, 1)} °C</text>
-      <text class="dlbl" x="616" y="146">⌀ ${wpsFmt(tMean, 1)} °C</text>
-      <text class="dlbl" x="616" y="164">${wpsFmt(s.Q / 1000, 2)} kW</text>`;
+      ${pipe(`M${404 + d} 82 V62 H${X(602)} V150`, col(s.T0), wHeat, off ? 0 : s.pc1)}
+      ${pipe(`M${X(602)} 150 V244 H${404 + d} V224`, col(s.TR), wHeat, off ? 0 : s.pc1)}
+      <rect class="buf" x="${370 + d}" y="82" width="46" height="142" rx="12"/>
+      <text class="dlbl" transform="translate(${393 + d} 153) rotate(-90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Pendelpuffer</text>
+      <text class="dsec" x="${X(505)}" y="158" text-anchor="middle">Heizkreis</text>
+      <text class="dlbl" x="${X(505)}" y="48" text-anchor="middle">T0: ${wpsFmt(s.T0, 1)} °C | PC1: ${wpsFmt(s.pc1, 0)} l/h</text>
+      <text class="dlbl" x="${X(505)}" y="268" text-anchor="middle">${wpsFmt(s.TR, 1)} °C</text>
+      <text class="dlbl" x="${X(616)}" y="146">⌀ ${wpsFmt(tMean, 1)} °C</text>
+      <text class="dlbl" x="${X(616)}" y="164">${wpsFmt(s.Q / 1000, 2)} kW</text>`;
     this._txt(this._$("cop-q"), `${wpsFmt(s.Q / 1000, 2)} kW`);
     this._txt(this._$("cop-p"), `${wpsFmt(s.pel / 1000, 2)} kW`);
     this._txt(this._$("cop-v"), off ? "–" : wpsFmt(s.cop, 2));
