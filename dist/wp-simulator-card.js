@@ -10,7 +10,7 @@
  *            emitter_exponent: 1.1   (statt emitter: Wärmeabgabe-Exponent selbst setzen, FBH 1.1, Heizkörper ca. 1.3)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.9.1";
+const WPS_VERSION = "3.9.2";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -201,7 +201,7 @@ function wpsCompute(p) {
   const spread = Math.max(0.5, p.spread);
   /* PC0 regelt auf die Spreizung. Die Pumpe ist linear (Durchfluss = a + b × Modulation),
      die WP fährt sie im Heizbetrieb aber nicht unter die Mindestmodulation – unter 5 °C Lufttemperatur höher (Frostschutz). */
-  const modMin = Ta < WPS_C.PC0_SWITCH ? (p.pc0modmin ?? 41) : (p.pc0modwarm ?? 35);
+  const modMin = p.pc0Key ? (p[p.pc0Key] ?? 41) : Ta < WPS_C.PC0_SWITCH ? (p.pc0modmin ?? 41) : (p.pc0modwarm ?? 35);
   const fMin = wpsPc0Flow(modMin), fMax = wpsPc0Flow(100);
   const capMinW = wpsCapMin(Ta, T0, model) * 1000;
   const capMaxW = wpsCapMax(Ta, T0, model) * 1000;
@@ -641,7 +641,14 @@ class WpSimulatorCard extends HTMLElement {
   }
 
   /* Regler für die Mindestmodulation PC0, den die Simulation bei der eingestellten Außentemperatur verwendet */
-  _pc0KeySim() { return this._p.ta < WPS_C.PC0_SWITCH ? "pc0modmin" : "pc0modwarm"; }
+  _pc0KeySim() { return this._pc0KeyNow() || (this._p.ta < WPS_C.PC0_SWITCH ? "pc0modmin" : "pc0modwarm"); }
+  /* Steht die Außentemperatur auf dem Live-Wert, gilt der Bereich nach der echten Lufttemperatur (TL2) wie bei der WP */
+  _pc0KeyNow() {
+    const out = this._num("outdoor");
+    if (!this._taAuto || out === null || Math.abs(out - this._p.ta) > 0.5) return null;
+    const t = this._num("tl2");
+    return t === null ? null : t < WPS_C.PC0_SWITCH ? "pc0modmin" : "pc0modwarm";
+  }
   /* Regler, in den der Live-Wert gehört: nach der ECHTEN Lufttemperatur (TL2, sonst gedämpfte Außentemperatur) */
   _pc0KeyLive() {
     const t = this._num("tl2") ?? this._num("outdoor");
@@ -898,7 +905,8 @@ class WpSimulatorCard extends HTMLElement {
     const rta = this._$("r-ta");
     if (rta) rta.classList.toggle("live", this._taAuto && this._num("outdoor") !== null);
     const live = this._livePc0();
-    const pc = live ? Object.assign({}, p, { pc0Live: live }) : p;
+    const kNow = this._pc0KeyNow();
+    const pc = Object.assign({}, p, live ? { pc0Live: live } : {}, kNow ? { pc0Key: kNow } : {});
     this._s = wpsCompute(pc);
     this._f = wpsFbh(p, this._ref(), p.ta);
     /* Vergleichsrechnung mit den Anlagenwerten bei gleicher Außentemperatur */
