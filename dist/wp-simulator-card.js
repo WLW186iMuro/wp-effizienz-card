@@ -377,7 +377,7 @@ const WPS_CSS = `
     .layout .sc { grid-column:2; grid-row:2; }
     .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
-    #chart { max-width:calc(36vh * 2.2667); margin:0 auto; }
+    #chart { max-width:calc(36vh * 2.7667); margin:0 auto; }
     .layout #diag { max-width:calc(28.8vh * 2.5036); }
     #chart path[stroke-width="2.5"] { stroke-width:3.2px; }
     #chart .ax text, #chart .axt { font-size:14.5px; }
@@ -923,7 +923,8 @@ class WpSimulatorCard extends HTMLElement {
   }
 
   _drawChart() {
-    const p = this._p, ref = this._ref(), W = WPS_CW, H = WPS_CH, M = WPS_M;
+    const p = this._p, ref = this._ref(), W = (this._cwid = window.innerWidth >= 1300 ? 830 : WPS_CW), H = WPS_CH, M = WPS_M;
+    this._$("chart").setAttribute("viewBox", `0 0 ${W} ${H}`);
     const iw = W - M.l - M.r, ih = H - M.t - M.b;
     const xMin = Math.min(-20, Math.floor(p.nat - 5)), xMax = 22;
     const N = 84, data = [];
@@ -1000,7 +1001,7 @@ class WpSimulatorCard extends HTMLElement {
   _hover(e) {
     if (!this._cx) return;
     const rc = this._$("chart").getBoundingClientRect();
-    const sx = ((e.clientX - rc.left) / rc.width) * WPS_CW;
+    const sx = ((e.clientX - rc.left) / rc.width) * (this._cwid || WPS_CW);
     const { xMin, xMax, iw } = this._cx;
     this._hoverTa = wpsClamp(xMin + ((sx - WPS_M.l) / iw) * (xMax - xMin), xMin, xMax);
     this._drawTip(this._hoverTa);
