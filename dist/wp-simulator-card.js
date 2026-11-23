@@ -258,16 +258,16 @@ const WPS_DEFAULTS = {
 
 /* Schlüssel, Bezeichnung, min, max, Schritt, Nachkommastellen, Einheit, Gruppe */
 const WPS_CONTROLS = [
-  ["ta", "Außentemperatur (gedämpft)", -20, 22, 0.1, 1, "°C", "Rahmen"],
-  ["ti", "Raumtemperatur (real gewünscht)", 18, 24, 0.5, 1, "°C", "Rahmen"],
+  ["ta", "Außentemp. (gedämpft)", -20, 22, 0.1, 1, "°C", "Rahmen"],
+  ["ti", "Raumtemp. (real gewünscht)", 18, 24, 0.5, 1, "°C", "Rahmen"],
   ["nat", "Normaußentemperatur", -20, 0, 0.1, 1, "°C", "Rahmen"],
   ["loadKw", "Gebäudeheizlast bei NAT", 1, 15, 0.1, 1, "kW", "Rahmen"],
-  ["limB", "Heizgrenze Gebäude (Heizlast = 0)", 8, 20, 0.5, 1, "°C", "Rahmen"],
-  ["copSlope", "Zusätzlicher COP-Abfall über 35 °C", -1, 3, 0.1, 1, "%/K", "Rahmen"],
-  ["pc0modmin", "Min. Modulation PC0 unter 5 °C", 10, 100, 1, 0, "%", "Rahmen"],
-  ["pc0modwarm", "Min. Modulation PC0 ab 5 °C", 10, 100, 1, 0, "%", "Rahmen"],
+  ["limB", "Heizgrenze Gebäude", 8, 20, 0.5, 1, "°C", "Rahmen"],
+  ["copSlope", "Zusätzl. COP-Abfall > 35 °C", -1, 3, 0.1, 1, "%/K", "Rahmen"],
+  ["pc0modmin", "Min. Mod. PC0 unter 5 °C", 10, 100, 1, 0, "%", "Rahmen"],
+  ["pc0modwarm", "Min. Mod. PC0 ab 5 °C", 10, 100, 1, 0, "%", "Rahmen"],
   ["vl20", "Fußpunkt (VL bei 20 °C)", 22, 40, 0.5, 1, "°C", "Einstellungen"],
-  ["vlNat", "Auslegungstemperatur (VL bei NAT)", 25, 55, 0.5, 1, "°C", "Einstellungen"],
+  ["vlNat", "Auslegung (VL bei NAT)", 25, 55, 0.5, 1, "°C", "Einstellungen"],
   ["rsoll", "Raumsoll EMS-ESP", 15, 25, 0.5, 1, "°C", "Einstellungen"],
   ["offs", "Temperaturanhebung", -5, 5, 1, 0, "K", "Einstellungen"],
   ["minflow", "Min. Vorlauftemperatur", 15, 30, 1, 0, "°C", "Einstellungen"],
@@ -369,7 +369,7 @@ const WPS_CSS = `
   }
   /* Große Bildschirme: alles auf einer Seite – links Regler, Mitte Diagramm und Schema, rechts Effizienz */
   @media (min-width:1300px) {
-    .layout { display:grid; grid-template-columns:minmax(280px,.8fr) minmax(0,1.7fr) minmax(300px,.9fr); }
+    .layout { display:grid; grid-template-columns:minmax(400px,1fr) minmax(0,1.5fr) minmax(300px,.85fr); }
     .grid2, .grid2.r { display:contents; }
     .layout .sec { border:0; padding:6px 12px; }
     .layout .sa { grid-column:1; grid-row:1 / span 2; border-right:1px solid var(--divider-color); }
@@ -379,7 +379,9 @@ const WPS_CSS = `
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
     #chart { max-width:calc(30vh * 2.2667); margin:0 auto; }
     #diag { max-width:calc(27vh * 2.5036); }
-    .row { min-height:22px; }
+    .layout .row { min-height:22px; grid-template-columns:minmax(0,1fr) 60px minmax(60px,84px); gap:6px; }
+    .layout .row label { font-size:12px; }
+    .layout .row.live label::after { content:" ●"; }
   }
   @media (max-width:899px) { .grid2 > .sec:first-child { border-bottom:1px solid var(--divider-color); } }
   .sec { padding:8px 12px; min-width:0; }
@@ -496,7 +498,7 @@ class WpSimulatorCard extends HTMLElement {
     const ov = this._config.controls || {};
     this._controls = WPS_CONTROLS.filter((r) => WPS_C.SPLIT || r[0] !== "limB").map((r) => {
       const o = ov[r[0]] || {}, c = r.slice();
-      if (r[0] === "limit" && WPS_C.SPLIT) c[1] = "Heizgrenze WP (Heizbetrieb aus ab)";
+      if (r[0] === "limit" && WPS_C.SPLIT) c[1] = "Heizgrenze WP (Heizung aus)";
       if (o.min !== undefined) c[2] = +o.min;
       if (o.max !== undefined) c[3] = +o.max;
       if (o.step !== undefined) c[4] = +o.step;
