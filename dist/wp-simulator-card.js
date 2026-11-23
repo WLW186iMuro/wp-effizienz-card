@@ -369,6 +369,9 @@ const WPS_CSS = `
   }
   /* Große Bildschirme: alles auf einer Seite – links Regler, Mitte Diagramm und Schema, rechts Effizienz */
   @media (min-width:1300px) {
+    ha-card .head { flex-wrap:nowrap; }
+    ha-card .title { min-width:0; }
+    ha-card .title span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .layout { display:grid; grid-template-columns:minmax(400px,.9fr) minmax(0,1.75fr) minmax(340px,.9fr); }
     .grid2, .grid2.r { display:contents; }
     .layout .sec { border:0; padding:4px 12px; }
@@ -879,6 +882,8 @@ class WpSimulatorCard extends HTMLElement {
       const pv = plant[k];
       const differs = WPS_TUNE.includes(k) && pv !== null && pv !== undefined && Math.abs(pv - p[k]) > 1e-6;
       el.classList.toggle("chg", differs);
+      const rowK = this._$("r-" + k);
+      if (rowK && WPS_TUNE.includes(k)) rowK.classList.toggle("live", pv !== null && pv !== undefined && !differs);
       el.title = pv !== null && pv !== undefined ? `Anlage: ${wpsFmt(pv, dec)} ${unit}` : "";
     }
     const kSim = this._pc0KeySim(), kLive = this._pc0KeyLive();
