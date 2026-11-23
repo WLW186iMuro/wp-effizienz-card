@@ -1140,12 +1140,12 @@ class WpSimulatorCard extends HTMLElement {
     const m1 = this._num("pc1flow"), pr1 = this._num("s_pressure");
     const same = pr1 !== null && Math.abs(pr1 - p.pressure) < 1;
     this._txt(this._$("k-pc1"), `${wpsFmt(s.pc1, 0)} l/h bei ${wpsFmt(p.pressure, 0)} mbar` +
-      (m1 !== null && m1 > 50 && pr1 !== null
-        ? (same ? " · EMS-ESP" : ` (gemessen ${wpsFmt(m1, 0)} l/h bei ${wpsFmt(pr1, 0)} mbar)`)
-        : " · aus letzter Messung"));
+      (m1 !== null && m1 > 50 && pr1 !== null ? (same ? " · EMS-ESP" : " · berechnet") : " · letzte Messung"));
+    this._$("k-pc1").title = m1 !== null && m1 > 50 && pr1 !== null && !same ? `Gemessen: ${wpsFmt(m1, 0)} l/h bei ${wpsFmt(pr1, 0)} mbar` : "";
     const sprReal = s.TC3 - s.TC0;
     this._txt(this._$("k-spr"), off ? "–" : `${wpsFmt(sprReal, 1)} K` +
-      (sprReal < p.spread - 0.05 ? (s.pc0live ? ` (Soll ${wpsFmt(p.spread, 1)} K)` : ` (Soll ${wpsFmt(p.spread, 1)} K, PC0 an der Mindestmodulation)`) : ""));
+      (sprReal < p.spread - 0.05 ? ` (Soll ${wpsFmt(p.spread, 1)} K)` : ""));
+    this._$("k-spr").title = !off && sprReal < p.spread - 0.05 && !s.pc0live ? "PC0 läuft an der Mindestmodulation, die Spreizung bleibt unter dem Soll." : "";
 
     const bar = this._$("k-covbar"), ct = this._$("k-cov");
     if (f.cov === null) {
