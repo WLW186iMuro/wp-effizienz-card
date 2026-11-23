@@ -377,8 +377,8 @@ const WPS_CSS = `
     .layout .sc { grid-column:2; grid-row:2; }
     .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
-    #chart { max-width:calc(30vh * 2.2667); margin:0 auto; }
-    #diag { max-width:calc(27vh * 2.5036); }
+    #chart { max-width:calc(29vh * 2.2667); margin:0 auto; }
+    #diag { max-width:calc(26vh * 2.5036); }
     .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
     .layout .row label { font-size:12px; }
     .layout .row.live label::after { content:" ●"; }
