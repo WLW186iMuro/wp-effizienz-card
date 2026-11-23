@@ -372,6 +372,7 @@ const WPS_CSS = `
     .layout { display:grid; grid-template-columns:minmax(400px,.9fr) minmax(0,1.75fr) minmax(340px,.9fr); }
     .grid2, .grid2.r { display:contents; }
     .layout .sec { border:0; padding:4px 12px; }
+    .layout .sa, .layout .sd { contain:size; overflow-y:auto; scrollbar-width:thin; }
     .layout .sa { grid-column:1; grid-row:1 / span 2; border-right:1px solid var(--divider-color); }
     .layout .sb { grid-column:2; grid-row:1; border-bottom:1px solid var(--divider-color); }
     .layout .sc { grid-column:2; grid-row:2; }
