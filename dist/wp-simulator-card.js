@@ -379,7 +379,7 @@ const WPS_CSS = `
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
     #chart { max-width:calc(30vh * 2.2667); margin:0 auto; }
     #diag { max-width:calc(27vh * 2.5036); }
-    .layout .row { min-height:22px; grid-template-columns:minmax(0,1fr) 60px minmax(60px,84px); gap:6px; }
+    .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
     .layout .row label { font-size:12px; }
     .layout .row.live label::after { content:" ●"; }
   }
