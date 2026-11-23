@@ -416,16 +416,18 @@ const WPS_CSS = `
   .tip div { display:flex; justify-content:space-between; gap:10px; white-space:nowrap; }
   .tip b { font-weight:600; }
   .tip .tv { font-variant-numeric:tabular-nums; }
-  .dlbl { fill:var(--primary-text-color); font-size:13px; font-variant-numeric:tabular-nums; }
-  .dlbl.b { font-weight:700; }
-  .dsec { fill:var(--secondary-text-color); font-size:14px; font-weight:600; }
+  .dlbl { fill:var(--primary-text-color); font-size:12px; font-variant-numeric:tabular-nums; }
+  .dlbl.b { font-weight:600; }
+  .dsec { fill:var(--secondary-text-color); font-size:13px; font-weight:500; letter-spacing:.02em; }
   .box { fill:var(--secondary-background-color); stroke:var(--divider-color); }
-  .hx { fill:var(--card-background-color); stroke-width:3; }
-  .pipe { fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:12 8;
+  .hx { fill:var(--card-background-color); stroke-width:2; }
+  .pipe { fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:7 5;
           animation:wps-flow var(--dur,2s) linear infinite; }
-  @keyframes wps-flow { to { stroke-dashoffset:-40; } }
-  .air { fill:none; stroke:#42a5f5; stroke-width:4; stroke-dasharray:12 8; stroke-linecap:round; animation:wps-flow 2.5s linear infinite; }
-  .buf { fill:var(--card-background-color); stroke:var(--primary-text-color); stroke-width:2; }
+  @keyframes wps-flow { to { stroke-dashoffset:-12; } }
+  .air { fill:none; stroke:#42a5f5; stroke-width:2.5; stroke-dasharray:7 5; stroke-linecap:round; animation:wps-flow 2.5s linear infinite; }
+  .buf { fill:var(--card-background-color); stroke:var(--primary-text-color); stroke-width:1.5; }
+  .sym { fill:var(--card-background-color); stroke-width:1.6; stroke-linejoin:round; }
+  .symf { stroke:none; }
   .copbox { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px 10px; font-size:12.5px;
             color:var(--primary-text-color); padding:5px 8px; border:1px solid var(--divider-color); border-radius:8px;
             max-width:640px; margin:6px auto 0; }
@@ -1027,7 +1029,7 @@ class WpSimulatorCard extends HTMLElement {
   _drawDiagram() {
     const s = this._s;
     const col = (t) => wpsTempColor(t);
-    const wPrim = wpsClamp(3 + s.pc0 / 140, 3, 12), wHeat = wpsClamp(3 + s.pc1 / 140, 3, 12);
+    const wPrim = wpsClamp(2 + s.pc0 / 450, 2, 5), wHeat = wpsClamp(2 + s.pc1 / 450, 2, 5);
     const dur = (lph) => (lph > 1 ? wpsClamp(400 / lph, 0.35, 4) : 0).toFixed(2);
     const pipe = (path, c, w, lph) =>
       `<path class="pipe" d="${path}" stroke="${c}" stroke-width="${w}" style="--dur:${dur(lph)}s${lph > 1 ? "" : ";animation:none"}"/>`;
@@ -1039,11 +1041,14 @@ class WpSimulatorCard extends HTMLElement {
       <rect class="box" x="66" y="40" width="176" height="226" rx="12"/>
       <text class="dsec" x="154" y="158" text-anchor="middle">Kältekreis</text>
       <text class="dlbl b" x="154" y="28" text-anchor="middle">Mod: ${off ? "aus" : wpsFmt(s.mod * 100, 0) + " %" + (s.cycling ? " · taktet " + wpsFmt(s.duty * 100, 0) + " %" : "")}</text>
-      ${pipe("M101 62 H140", col(s.suction), 4, ref)}
-      ${pipe("M168 62 H206", col(s.tr1), 4, ref)}
-      ${pipe("M206 244 H101", "#7e57c2", 4, ref)}
-      <circle cx="154" cy="62" r="13" fill="var(--card-background-color)" stroke="#ef6c00" stroke-width="3"/>
-      <path d="M146 62 q4 -8 8 0 t8 0" fill="none" stroke="#ef6c00" stroke-width="2"/>
+      ${pipe("M101 62 H140", col(s.suction), 2.5, ref)}
+      ${pipe("M168 62 H206", col(s.tr1), 2.5, ref)}
+      ${pipe("M206 244 H101", "#7e57c2", 2.5, ref)}
+      <circle class="sym" cx="154" cy="62" r="13" stroke="#ef6c00"/>
+      <path d="M146 62 q4 -8 8 0 t8 0" fill="none" stroke="#ef6c00" stroke-width="1.6"/>
+      <path class="sym" d="M142 237 L154 244 L142 251 Z M166 237 L154 244 L166 251 Z" stroke="#7e57c2"/>
+      <circle class="sym" cx="330" cy="62" r="9" stroke="var(--secondary-text-color)"/><path class="symf" d="M326 57.5 L335 62 L326 66.5 Z" fill="var(--secondary-text-color)"/>
+      <circle class="sym" cx="500" cy="62" r="9" stroke="var(--secondary-text-color)"/><path class="symf" d="M496 57.5 L505 62 L496 66.5 Z" fill="var(--secondary-text-color)"/>
       <text class="dlbl" x="102" y="52">${wpsFmt(s.suction, 1)} °C</text>
       <text class="dlbl" x="154" y="94" text-anchor="middle">TR1: ${wpsFmt(s.tr1, 1)} °C</text>
       <text class="dlbl" x="102" y="284">${wpsFmt(s.evap, 1)} °C</text>
