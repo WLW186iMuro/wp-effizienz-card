@@ -383,7 +383,7 @@ const WPS_CSS = `
     #chart .ax text, #chart .axt { font-size:14.5px; }
     .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
     .layout .row label { font-size:12px; }
-    .layout .row.live label::after { content:" ●"; }
+    .layout .row.live label::after { content:" EMS"; color:#2196f3; font-size:10px; font-weight:700; letter-spacing:.03em; }
   }
   @media (max-width:899px) { .grid2 > .sec:first-child { border-bottom:1px solid var(--divider-color); } }
   .sec { padding:8px 12px; min-width:0; }
@@ -443,7 +443,7 @@ const WPS_CSS = `
   .kpi .lbl { font-size:12px; color:var(--secondary-text-color); }
   .kpi .delta { font-size:13px; font-weight:600; font-variant-numeric:tabular-nums; }
   .delta.up { color:var(--success-color, #43a047); } .delta.down { color:var(--error-color, #e53935); }
-  .kv { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:1px 10px; font-size:12px; font-variant-numeric:tabular-nums; }
+  .kv { display:grid; grid-template-columns:minmax(0,1fr) fit-content(60%); gap:1px 10px; font-size:12px; font-variant-numeric:tabular-nums; }
   .kv span:nth-child(odd) { color:var(--secondary-text-color); }
   .kv span:nth-child(even) { text-align:right; color:var(--primary-text-color); }
   .cov { height:6px; border-radius:3px; background:var(--divider-color); margin:6px 0 2px; overflow:hidden; position:relative; }
