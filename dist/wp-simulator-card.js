@@ -378,7 +378,7 @@ const WPS_CSS = `
     .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
     #chart { max-width:calc(36vh * 2.2667); margin:0 auto; }
-    #diag { max-width:calc(27vh * 2.5036); }
+    .layout #diag { max-width:calc(27vh * 2.5036); }
     #chart path[stroke-width="2.5"] { stroke-width:3.2px; }
     #chart .ax text, #chart .axt { font-size:14.5px; }
     .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
