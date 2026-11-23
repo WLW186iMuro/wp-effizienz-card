@@ -369,16 +369,18 @@ const WPS_CSS = `
   }
   /* Große Bildschirme: alles auf einer Seite – links Regler, Mitte Diagramm und Schema, rechts Effizienz */
   @media (min-width:1300px) {
-    .layout { display:grid; grid-template-columns:minmax(400px,1fr) minmax(0,1.5fr) minmax(300px,.85fr); }
+    .layout { display:grid; grid-template-columns:minmax(360px,.8fr) minmax(0,1.9fr) minmax(340px,.9fr); }
     .grid2, .grid2.r { display:contents; }
-    .layout .sec { border:0; padding:6px 12px; }
+    .layout .sec { border:0; padding:4px 12px; }
     .layout .sa { grid-column:1; grid-row:1 / span 2; border-right:1px solid var(--divider-color); }
     .layout .sb { grid-column:2; grid-row:1; border-bottom:1px solid var(--divider-color); }
     .layout .sc { grid-column:2; grid-row:2; }
     .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
-    #chart { max-width:calc(29vh * 2.2667); margin:0 auto; }
-    #diag { max-width:calc(26vh * 2.5036); }
+    #chart { max-width:calc(36vh * 2.2667); margin:0 auto; }
+    #diag { max-width:calc(27vh * 2.5036); }
+    #chart path[stroke-width="2.5"] { stroke-width:3.2px; }
+    #chart .ax text, #chart .axt { font-size:14.5px; }
     .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
     .layout .row label { font-size:12px; }
     .layout .row.live label::after { content:" ●"; }
