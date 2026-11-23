@@ -378,7 +378,7 @@ const WPS_CSS = `
     .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
     #chart { max-width:calc(36vh * 2.2667); margin:0 auto; }
-    .layout #diag { max-width:calc(27vh * 2.5036); }
+    .layout #diag { max-width:calc(28.8vh * 2.5036); }
     #chart path[stroke-width="2.5"] { stroke-width:3.2px; }
     #chart .ax text, #chart .axt { font-size:14.5px; }
     .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
@@ -393,8 +393,8 @@ const WPS_CSS = `
   .grp { font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--secondary-text-color); margin:6px 0 1px; }
   .grp:first-child { margin-top:0; }
   .row { display:grid; grid-template-columns:minmax(0,1fr) 66px minmax(90px,140px); align-items:center; gap:8px; min-height:24px; }
-  .row label { font-size:12.5px; color:var(--primary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .row .v { text-align:right; font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--primary-text-color); }
+  .row label { font-size:12px; color:var(--primary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .v { text-align:right; font-variant-numeric:tabular-nums; font-size:12px; color:var(--primary-text-color); }
   .row input[type=range] { width:100%; accent-color:var(--primary-color); margin:0; height:16px; }
   .row.live label::after { content:" · EMS-ESP"; color:var(--primary-color); font-weight:600; font-size:11px; }
   .row.idle label, .row.idle .v { opacity:.45; }
@@ -457,7 +457,7 @@ const WPS_CSS = `
   .warn.show { display:block; }
   .hashelp > label { cursor:pointer; }
   .qi { display:inline-block; color:var(--warning-color, #ffc107); font-size:13px; font-weight:700; line-height:1; vertical-align:-1px; }
-  .help { display:none; grid-column:1 / -1; font-size:11.5px; line-height:1.4; color:var(--secondary-text-color); background:var(--secondary-background-color); border-radius:8px; padding:8px 10px; margin:2px 0 4px; }
+  .help { display:none; grid-column:1 / -1; font-size:12px; line-height:1.4; color:var(--secondary-text-color); background:var(--secondary-background-color); border-radius:8px; padding:8px 10px; margin:2px 0 4px; }
   .row.open .help { display:block; }
   .mdl { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
   .mdl select { background:var(--secondary-background-color); color:var(--primary-text-color); border:1px solid var(--divider-color); border-radius:6px; padding:3px 6px; font:inherit; }
@@ -1061,17 +1061,17 @@ class WpSimulatorCard extends HTMLElement {
       <rect class="hx" x="206" y="54" width="23" height="198" rx="3" stroke="#ffa726"/>
       <text class="dlbl" transform="translate(217.5 153) rotate(90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Verflüssiger</text>
 
-      ${pipe("M229 62 H382 V96", col(s.TC3), wPrim, s.pc0)}
-      ${pipe("M382 236 V244 H229", col(s.TC0), wPrim, s.pc0)}
+      ${pipe("M229 62 H382 V82", col(s.TC3), wPrim, s.pc0)}
+      ${pipe("M382 224 V244 H229", col(s.TC0), wPrim, s.pc0)}
       <text class="dsec" x="306" y="158" text-anchor="middle">Primärkreis</text>
       <text class="dlbl" x="306" y="32" text-anchor="middle">TC3: ${wpsFmt(s.TC3, 1)} °C</text>
       <text class="dlbl" x="306" y="48" text-anchor="middle">PC0: ${wpsFmt(s.pc0, 0)} l/h (${wpsFmt(s.pc0mod, 0)} %)${s.pc0live ? " · live" : ""}</text>
       <text class="dlbl" x="306" y="268" text-anchor="middle">TC0: ${wpsFmt(s.TC0, 1)} °C</text>
 
-      ${pipe("M404 96 V62 H602 V150", col(s.T0), wHeat, off ? 0 : s.pc1)}
-      ${pipe("M602 150 V244 H404 V236", col(s.TR), wHeat, off ? 0 : s.pc1)}
-      <rect class="buf" x="370" y="96" width="46" height="140" rx="12"/>
-      <text class="dlbl" transform="translate(393 166) rotate(-90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Pendelpuffer</text>
+      ${pipe("M404 82 V62 H602 V150", col(s.T0), wHeat, off ? 0 : s.pc1)}
+      ${pipe("M602 150 V244 H404 V224", col(s.TR), wHeat, off ? 0 : s.pc1)}
+      <rect class="buf" x="370" y="82" width="46" height="142" rx="12"/>
+      <text class="dlbl" transform="translate(393 153) rotate(-90)" text-anchor="middle" dominant-baseline="central" style="font-size:12px">Pendelpuffer</text>
       <text class="dsec" x="505" y="158" text-anchor="middle">Heizkreis</text>
       <text class="dlbl" x="505" y="48" text-anchor="middle">T0: ${wpsFmt(s.T0, 1)} °C | PC1: ${wpsFmt(s.pc1, 0)} l/h</text>
       <text class="dlbl" x="505" y="268" text-anchor="middle">${wpsFmt(s.TR, 1)} °C</text>
