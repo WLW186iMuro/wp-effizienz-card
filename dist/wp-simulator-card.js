@@ -377,8 +377,8 @@ const WPS_CSS = `
     .layout .sc { grid-column:2; grid-row:2; }
     .layout .sd { grid-column:3; grid-row:1 / span 2; border-left:1px solid var(--divider-color); }
     /* Höhe folgt dem Fenster: Breite = Höhe × Seitenverhältnis der Zeichnung */
-    #chart { max-width:calc(36vh * 2.7667); margin:0 auto; }
-    .layout #diag { max-width:calc(28.8vh * 3.482); }
+    #chart { max-width:none; margin:0 auto; }
+    .layout #diag { max-width:none; }
     #chart path[stroke-width="2.5"] { stroke-width:3.2px; }
     #chart .ax text, #chart .axt { font-size:14.5px; }
     .layout .row { min-height:22px; grid-template-columns:minmax(0,196px) 62px minmax(60px,1fr); gap:8px; }
@@ -922,8 +922,24 @@ class WpSimulatorCard extends HTMLElement {
     }
   }
 
+  _wideW(id, w0, h0, share, lo, hi) {
+    if (!this._rz) {
+      this._rz = 1; this._rw = {};
+      const ro = new ResizeObserver(() => {
+        const w = Math.round(this._$("chart").getBoundingClientRect().width) + "/" + Math.round(this._$("diag").getBoundingClientRect().width) + "/" + window.innerHeight;
+        if (w !== this._rwk) { this._rwk = w; this._drawChart(); this._drawDiagram(); }
+      });
+      ro.observe(this._$("chart")); ro.observe(this._$("diag"));
+      window.addEventListener("resize", () => { this._drawChart(); this._drawDiagram(); });
+    }
+    const px = this._$(id).getBoundingClientRect().width;
+    if (window.innerWidth < 1300 || px < 100) return w0;
+    const avail = Math.max(380, window.innerHeight - 323);
+    return wpsClamp(Math.round(px / ((avail * share) / h0)), lo, hi);
+  }
+
   _drawChart() {
-    const p = this._p, ref = this._ref(), W = (this._cwid = window.innerWidth >= 1300 ? 830 : WPS_CW), H = WPS_CH, M = WPS_M;
+    const p = this._p, ref = this._ref(), W = (this._cwid = this._wideW("chart", WPS_CW, WPS_CH, 0.56, 560, 900)), H = WPS_CH, M = WPS_M;
     this._$("chart").setAttribute("viewBox", `0 0 ${W} ${H}`);
     const iw = W - M.l - M.r, ih = H - M.t - M.b;
     const xMin = Math.min(-20, Math.floor(p.nat - 5)), xMax = 22;
@@ -1040,8 +1056,9 @@ class WpSimulatorCard extends HTMLElement {
       `<path class="pipe" d="${path}" stroke="${c}" stroke-width="${w}" style="--dur:${dur(lph)}s${lph > 1 ? "" : ";animation:none"}"/>`;
     const off = s.Q <= 0, ref = off ? 0 : 300;
     const tMean = (s.T0 + s.TR) / 2;
-    const K = window.innerWidth >= 1300 ? 1.6 : 1, X = (x) => (x <= 242 ? x : 242 + (x - 242) * K), d = X(393) - 393;
-    this._$("diag").setAttribute("viewBox", `0 14 ${X(696)} 278`);
+    const vbw = this._wideW("diag", 696, 278, 0.44, 696, 1100);
+    const K = (vbw - 242) / 454, X = (x) => (x <= 242 ? x : 242 + (x - 242) * K), d = X(393) - 393;
+    this._$("diag").setAttribute("viewBox", `0 14 ${vbw} 278`);
     this._$("diag").innerHTML = `
       <path class="air" d="M6 70 H62"/><path class="air" d="M6 230 H62"/>
       <text class="dlbl b" x="30" y="155" text-anchor="middle">${wpsFmt(s.Ta, 1)} °C</text>
