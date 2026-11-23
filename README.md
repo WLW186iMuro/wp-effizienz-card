@@ -52,13 +52,20 @@ Bei hohen Vorlauftemperaturen zusätzlich den Regler „Zusätzlicher COP-Abfall
 
 Die Einstellungen der Wärmepumpe (Fußpunkt, Auslegungstemperatur, Raumsoll, Spreizung, Pumpendruck usw.) holt die Schaltfläche **Aus EMS-ESP laden** direkt aus der Anlage. Ebenso übernimmt die Karte die gedämpfte Außentemperatur live.
 
+### Live-Werte und Bedienung
+
+- Regler, deren Wert gerade dem Wert aus EMS-ESP entspricht, tragen ein blaues **EMS**. Verschiebst du einen Regler, verschwindet die Kennzeichnung.
+- Die **Mindestmodulation von PC0** lernt die Karte im Heizbetrieb aus der Live-Modulation. Wie die Wärmepumpe richtet sie sich dabei nach der echten Lufttemperatur an der Außeneinheit (TL2): unter 4 °C in den Regler „unter 5 °C“, ab 5 °C in den Regler „ab 5 °C“, dazwischen wird nichts gelernt. Steht die Außentemperatur auf dem Live-Wert, verwendet die Rechnung den Regler nach TL2. Verschiebst du die Außentemperatur von Hand, gilt die 5-°C-Grenze am Regler.
+- **Standardwerte** setzt alle Regler zurück, die Live-Übernahme von Außentemperatur und PC0-Modulation bleibt dabei an. **Als Standard speichern** legt die aktuellen Reglerstellungen als eigene Standardwerte ab.
+- Ab 1300 px Fensterbreite zeigt die Karte alles auf einer Seite in drei Spalten (Regler, Diagramm mit Anlagenschema, Effizienz). Diagramm und Schema passen sich an die Fenstergröße an. Die Ansicht dafür als Typ **Panel** anlegen. Auf schmalen Bildschirmen stehen die Bereiche untereinander.
+
 ## Voraussetzungen
 
 - Home Assistant mit EMS-ESP (MQTT-Discovery) und den Standardnamen `sensor.boiler_…`, `sensor.thermostat_…`, `number.thermostat_…`
 - Das Rechenmodell kennt die Außeneinheiten **4, 5, 7, 10 und 12 kW** (WLW176i/186i AR, Inneneinheit TP70, Fußbodenheizung). Die Größe wählst du im Rechner unter „Außeneinheit“ oder per `defaults: { model: "10 kW" }`. **Nur das 7-kW-Profil ist an einer echten Anlage geprüft.** Die anderen Größen sind aus den Datenblattwerten der Buderus-Planungsunterlage (Tabelle 8.3.1) abgeleitet; Abweichung der Modell-COPs vom Datenblatt 1–5 %. Die Punkte bei −20, −15, +15 und +20 °C sowie die Mindestleistungen sind aus Bild 9 der Unterlage abgelesen (etwa ±0,1 kW). Bei 10/12 kW zeigt die Mindestleistungskurve bei +2 °C etwa 3,1 kW, die Tabelle nennt 2,1 kW als Modulationsbereich; der Rechner folgt der Kurve. Die Pumpenkennlinie PC0 stammt von der 7-kW-Anlage. Die Leistungskurven bei 45 und 55 °C Vorlauf (Bild 11 und 13) sind je Größe eingebaut, auch die Mindestleistung. Die Nenn-COP-Kurven der Unterlage (Bild 10, 12, 14) liegen bei 45 und 55 °C deutlich unter dem, was der Rechner liefert (bis etwa 30 %); sie gelten für den Nennpunkt mit Inneneinheit und sind mit den Tabellenwerten bei Maximalleistung nicht deckungsgleich. Bei Vorlauftemperaturen ab 45 °C ist der berechnete COP daher eher optimistisch. Je Größe ist der Abfall von 35 auf 55 °C an das SCOP-Verhältnis W55/W35 der Unterlage angeglichen. Wer Heizkörper oder ein schlecht gedämmtes Haus hat, kann den Regler „Zusätzlicher COP-Abfall über 35 °C“ (%/K, Standard 0, per `defaults: { copSlope: 1 }` voreinstellbar) erhöhen, etwa auf 1 bis 2 %/K, bis der Rechner zur gemessenen JAZ passt. Unterhalb von 35 °C Vorlauf hat der Regler keine Wirkung. Rückmeldungen mit Messwerten anderer Größen sind willkommen.
 - Die JAZ-Karte nutzt `recorder/statistics_during_period`. Die Energiezähler der Wärmepumpe müssen also in der Langzeitstatistik stehen (Standard bei EMS-ESP-Entitäten mit `state_class`).
 
-Ein eigener Helfer ist nicht nötig. Den Primärkreis-Durchfluss rechnet die Karte mit der eingebauten Pumpenkennlinie selbst. Wer einen eigenen Sensor hat, gibt ihn unter `entities: { pc0flow: … }` an.
+Ein eigener Helfer ist nicht nötig. Den Primärkreis-Durchfluss rechnet die Karte aus der Live-Modulation von PC0 (`sensor.boiler_heatingpumpmod`) mit der eingebauten Pumpenkennlinie. Für die Zeile „Gemessen (EMS-ESP)“ nutzt sie `sensor.boiler_hppower` und `sensor.boiler_hpcurrpower`, für die Temperaturbereiche der PC0-Modulation `sensor.boiler_hptl2`.
 
 ## Optionen
 

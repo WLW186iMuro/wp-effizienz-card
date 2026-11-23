@@ -10,7 +10,7 @@
  *            emitter_exponent: 1.1   (statt emitter: Wärmeabgabe-Exponent selbst setzen, FBH 1.1, Heizkörper ca. 1.3)
  *            heizgrenze: legacy   (altes Verhalten bis 3.3.0: eine Heizgrenze für Gebäude und WP)
  */
-const WPS_VERSION = "3.9.2";
+const WPS_VERSION = "3.9.3";
 /* Stand der gespeicherten Reglerwerte. Nur erhöhen, wenn die Karte die Anlagenwerte neu aus EMS-ESP laden soll. */
 const WPS_STORE_V = "3.2.1";
 
@@ -1048,7 +1048,8 @@ class WpSimulatorCard extends HTMLElement {
     /* Werte ausgeblendet: nur die Markierungslinie mitführen */
     if (!this._tipOn) { tip.style.display = "none"; return; }
     tip.style.display = "";
-    const st = wpsCompute(Object.assign({}, p, { ta: Ta }));
+    /* An der eingestellten Außentemperatur dieselben Werte wie rechts (Live-Modulation PC0) */
+    const st = this._s && Math.abs(Ta - p.ta) < 0.05 ? this._s : wpsCompute(Object.assign({}, p, { ta: Ta }));
     const fb = wpsFbh(p, this._ref(), Ta);
     const near = this._bv && Math.abs(Ta - this._bv.Ta) < 0.4 ? `<div><i>Bivalenzpunkt</i></div>` : "";
     const offTxt = fb.Q > 0 && !fb.on ? ` (WP aus)` : "";
